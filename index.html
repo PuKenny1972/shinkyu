@@ -57,6 +57,7 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
 
   <main>
     <section id="viewStudy">
+<!-- 学習ツールバー（差し替え） -->
       <div class="toolbar">
         <label>モード
           <select id="mode">
@@ -79,11 +80,12 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
             <option value="code">コード順</option>
           </select>
         </label>
-        <label><input type="checkbox" id="requeueWrong" checked> 間違えた問題を最後に再出題</label>
         <label>経絡 <select id="filterMeridian"><option value="">（すべて）</option></select></label>
         <label>五兪穴 <select id="filterShu"><option value="">（指定なし）</option><option>井</option><option>滎</option><option>兪</option><option>経</option><option>合</option></select></label>
         <label>五行 <select id="filterPhase"><option value="">（指定なし）</option><option>木</option><option>火</option><option>土</option><option>金</option><option>水</option></select></label>
         <label>出題数 <input type="number" id="limit" min="5" max="200" value="20" style="width:80px"></label>
+        <!-- ← ここに移動 -->
+        <label><input type="checkbox" id="requeueWrong" checked> 間違えた問題を最後に再出題</label>
         <button class="btn primary" id="btnStart" type="button" onclick="try{start()}catch(e){alert(e)}">開始</button>
         <span class="small" id="info"></span>
       </div>
