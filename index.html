@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Keiketsu Mini v8（MCQ + 再出題 + 貼付け）</title>
+<title>Keiketsu Mini v8（複数選択 + 並び強化）</title>
 <meta name="theme-color" content="#0ea5e9"/>
 <link rel="apple-touch-icon" href="icon-180.png"><link rel="manifest" href="manifest.json">
 <script>if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));}</script>
@@ -15,9 +15,10 @@ nav{margin-left:auto;display:flex;gap:8px}
 nav button{border:1px solid var(--border);background:#fff;padding:8px 10px;border-radius:10px;font-size:14px;cursor:pointer}
 nav button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 main{padding:14px;max-width:1240px;margin:0 auto}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;align-items:center;margin-bottom:12px}
+.toolbar > *{grid-column:span 3} .toolbar .wide{grid-column:span 6} .toolbar .full{grid-column:1/-1}
 select,input,button,textarea{font-size:14px}
-select,input[type=number],input[type=file],input[type=text]{padding:8px;border:1px solid var(--border);border-radius:10px;background:#fff}
+select,input[type=number],input[type=file],input[type=text],textarea{padding:8px;border:1px solid var(--border);border-radius:10px;background:#fff}
 .btn{padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer}
 .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 .btn.success{background:#10b981;color:#fff;border-color:#10b981}
@@ -39,15 +40,16 @@ th{background:#f1f5f9;position:sticky;top:0;z-index:1}
 footer{color:#6b7280;font-size:12px;padding:20px 14px;margin:24px auto;max-width:1240px}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111;color:#fff;padding:8px 12px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s}
 #toast.show{opacity:.9}
-th.col-code,td[data-key=code]{width:86px}th.col-name,td[data-key=name]{width:120px}th.col-meridian,td[data-key=meridian]{width:140px}th.col-reading,td[data-key=reading]{width:110px}
+th.col-code,td[data-key=code]{width:86px}th.col-name,td[data-key=name]{width:120px}th.col-meridian,td[data-key=meridian]{width:160px}th.col-reading,td[data-key=reading]{width:110px}
 th.col-shu,td[data-key=shu]{width:56px}th.col-phase,td[data-key=phase]{width:56px}
 th.col-location,td[data-key=location],th.col-indications,td[data-key=indications],th.col-memo,td[data-key=memo]{width:420px;white-space:normal!important;word-break:break-word;overflow-wrap:anywhere}
 .badge{margin-left:8px;padding:2px 8px;border-radius:999px;background:#ecfccb;color:#3f6212;border:1px solid #d9f99d;font-size:12px}
+label small{color:#6b7280}
 </style>
 </head>
 <body>
   <header>
-    <h1>Keiketsu Mini v8（拡張版）<span id="badge" class="badge">JS OK</span></h1>
+    <h1>Keiketsu Mini v8（複数選択 + 並び強化）<span id="badge" class="badge">JS OK</span></h1>
     <nav>
       <button id="tabStudy" class="active" onclick="try{show('viewStudy','tabStudy')}catch(e){}">学習</button>
       <button id="tabManage" onclick="try{show('viewManage','tabManage')}catch(e){}">データ管理</button>
@@ -57,7 +59,7 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
 
   <main>
     <section id="viewStudy">
-<!-- 学習ツールバー（差し替え） -->
+      <!-- 学習ツールバー -->
       <div class="toolbar">
         <label>モード
           <select id="mode">
@@ -77,15 +79,34 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
         <label>順序
           <select id="order">
             <option value="random">ランダム</option>
-            <option value="code">コード順</option>
+            <option value="code">コード順（CV→GV→十二正経）</option>
           </select>
         </label>
-        <label>経絡 <select id="filterMeridian"><option value="">（すべて）</option></select></label>
-        <label>五兪穴 <select id="filterShu"><option value="">（指定なし）</option><option>井</option><option>滎</option><option>兪</option><option>経</option><option>合</option></select></label>
-        <label>五行 <select id="filterPhase"><option value="">（指定なし）</option><option>木</option><option>火</option><option>土</option><option>金</option><option>水</option></select></label>
-        <label>出題数 <input type="number" id="limit" min="5" max="200" value="20" style="width:80px"></label>
-        <!-- ← ここに移動 -->
-        <label><input type="checkbox" id="requeueWrong" checked> 間違えた問題を最後に再出題</label>
+
+        <label class="wide">経絡（複数選択可）
+          <select id="filterMeridians" multiple size="6" style="width:100%">
+            <!-- JSで埋め込み -->
+          </select><br><small>⌘/Ctrl で複数選択</small>
+        </label>
+
+        <label class="wide">コード指定（複数）<br>
+          <textarea id="filterCodes" rows="3" placeholder="例）CV1-10, LU5 ST36&#10;カンマ/空白/改行区切り、範囲OK" style="width:100%"></textarea>
+        </label>
+
+        <label>五兪穴
+          <select id="filterShu">
+            <option value="">（指定なし）</option><option>井</option><option>滎</option><option>兪</option><option>経</option><option>合</option>
+          </select>
+        </label>
+        <label>五行
+          <select id="filterPhase">
+            <option value="">（指定なし）</option><option>木</option><option>火</option><option>土</option><option>金</option><option>水</option>
+          </select>
+        </label>
+
+        <label>出題数 <input type="number" id="limit" min="5" max="200" value="20" style="width:100%"></label>
+        <label class="full"><input type="checkbox" id="requeueWrong" checked> 間違えた問題を最後に再出題</label>
+
         <button class="btn primary" id="btnStart" type="button" onclick="try{start()}catch(e){alert(e)}">開始</button>
         <span class="small" id="info"></span>
       </div>
@@ -97,12 +118,12 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
           <div class="small" id="subText"></div>
           <div class="mcq hidden" id="mcqArea"></div>
         </div>
-        <div class="toolbar" style="justify-content:center;gap:12px;">
+        <div class="toolbar" style="grid-template-columns:repeat(12,1fr);gap:12px;align-items:center">
           <button class="btn" id="btnFlip" type="button" onclick="try{flip()}catch(e){alert(e)}">答えを表示/裏面にする</button>
           <button class="btn danger" id="btnWrong" type="button" onclick="try{markResult(false)}catch(e){alert(e)}">× わからない</button>
           <button class="btn success" id="btnRight" type="button" onclick="try{markResult(true)}catch(e){alert(e)}">○ 正解</button>
+          <div class="small" id="progress" style="grid-column:span 9"></div>
         </div>
-        <div class="small" id="progress"></div>
       </div>
 
       <div class="small" style="color:#374151">
@@ -113,7 +134,7 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
     </section>
 
     <section id="viewManage" class="hidden">
-      <div class="toolbar">
+      <div class="toolbar" style="grid-template-columns:repeat(12,1fr)">
         <input type="file" id="fileInput" accept=".csv,.json">
         <button class="btn" id="btnImport" type="button">インポート</button>
         <button class="btn" id="btnAdd" type="button">行を追加</button>
@@ -121,7 +142,7 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
         <button class="btn danger" id="btnDeleteSel" type="button">選択行を削除</button>
         <button class="btn" id="btnExportCSV" type="button">CSVを書き出し</button>
         <button class="btn" id="btnExportJSON" type="button">JSONを書き出し</button>
-        <input type="text" id="txtFind" placeholder="検索（コード/経穴名/位置/主治/その他/五兪穴/五行）" style="flex:1;min-width:200px">
+        <input class="wide" type="text" id="txtFind" placeholder="検索（コード/経穴名/位置/主治/その他/五兪穴/五行）">
       </div>
       <div class="grid" style="margin-top:10px">
         <table>
@@ -137,16 +158,14 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
     </section>
 
     <section id="viewAbout" class="hidden">
-      <div class="card"><h3>このアプリについて（v8 拡張）</h3>
+      <div class="card"><h3>このアプリについて（v8 複数選択版）</h3>
         <ul>
-          <li>初回に <code>seed.json</code> をロード、以後はローカル保存。</li>
-          <li>四択・再出題・コード順/ランダム・一括貼り付けに対応。</li>
+          <li>経絡と経穴コードの複数指定フィルタに対応。</li>
+          <li>コード順は CV→GV→十二正経（LU→LI→ST→SP→HT→SI→BL→KI→PC→SJ→GB→LV）で数値昇順。</li>
         </ul>
       </div>
     </section>
   </main>
-
-  <footer>© 2025 Keiketsu Mini – v8</footer>
 
   <!-- 一括貼り付けダイアログ -->
   <dialog id="dlgPaste">
@@ -179,6 +198,35 @@ const PHASE_SEQ_YIN=['木','火','土','金','水'];const PHASE_SEQ_YANG=['金',
 const SHU_POINTS={'手の太陰肺経':{'井':'LU11','滎':'LU10','兪':'LU9','経':'LU8','合':'LU5'},'手の陽明大腸経':{'井':'LI1','滎':'LI2','兪':'LI3','経':'LI5','合':'LI11'},'足の陽明胃経':{'井':'ST45','滎':'ST44','兪':'ST43','経':'ST41','合':'ST36'},'足の太陰脾経':{'井':'SP1','滎':'SP2','兪':'SP3','経':'SP5','合':'SP9'},'手の少陰心経':{'井':'HT9','滎':'HT8','兪':'HT7','経':'HT4','合':'HT3'},'手の太陽小腸経':{'井':'SI1','滎':'SI2','兪':'SI3','経':'SI5','合':'SI8'},'足の太陽膀胱経':{'井':'BL67','滎':'BL66','兪':'BL65','経':'BL60','合':'BL40'},'足の少陰腎経':{'井':'KI1','滎':'KI2','兪':'KI3','経':'KI7','合':'KI10'},'手の厥陰心包経':{'井':'PC9','滎':'PC8','兪':'PC7','経':'PC5','合':'PC3'},'手の少陽三焦経':{'井':'SJ1','滎':'SJ2','兪':'SJ3','経':'SJ6','合':'SJ10'},'足の少陽胆経':{'井':'GB44','滎':'GB43','兪':'GB41','経':'GB38','合':'GB34'},'足の厥陰肝経':{'井':'LV1','滎':'LV2','兪':'LV3','経':'LV4','合':'LV8'}};
 const PRESETS={'code->name':{qKey:'code',aKey:'name'},'name->location':{qKey:'name',aKey:'location'},'name->indications':{qKey:'name',aKey:'indications'},'code->location':{qKey:'code',aKey:'location'},'location->name':{qKey:'location',aKey:'name'}};
 
+// コードを英字+数値に分解
+function codeParts(code){
+  const s=(code||'').toUpperCase().trim();
+  const m=s.match(/^([A-Z]+)(\d+)$/); if(m) return {prefix:m[1],num:parseInt(m[2],10),raw:s};
+  const m2=s.match(/^([A-Z]+)(\d+)/); if(m2) return {prefix:m2[1],num:parseInt(m2[2],10),raw:s};
+  return {prefix:s,num:Number.MAX_SAFE_INTEGER,raw:s};
+}
+// 並び優先：CV→GV→LU→LI→ST→SP→HT→SI→BL→KI→PC→SJ→GB→LV
+const PREFIX_ORDER=['CV','GV','LU','LI','ST','SP','HT','SI','BL','KI','PC','SJ','GB','LV'];
+const PREFIX_RANK=Object.fromEntries(PREFIX_ORDER.map((p,i)=>[p,i]));
+function prefixRank(p){p=(p||'').toUpperCase();return (p in PREFIX_RANK)?PREFIX_RANK[p]:999}
+
+// ユーザー入力コードのパース（カンマ/空白/改行、範囲 CV1-10）
+function parseCodeFilter(text){
+  const tokens=(text||'').toUpperCase().split(/[\s,]+/).map(s=>s.trim()).filter(Boolean);
+  const set=new Set();
+  for(const t of tokens){
+    const m=t.match(/^([A-Z]+)(\d+)-(\d+)$/);
+    if(m){
+      const pref=m[1], a=parseInt(m[2],10), b=parseInt(m[3],10);
+      const [s,e]=a<=b?[a,b]:[b,a];
+      for(let n=s;n<=e;n++) set.add(pref+n);
+    }else{
+      set.add(t);
+    }
+  }
+  return set;
+}
+
 let data=[],filtered=[],toastTimer;const toastEl=el('toast');
 const toast=msg=>{clearTimeout(toastTimer);toastEl.textContent=msg;toastEl.classList.add('show');setTimeout(()=>toastEl.classList.remove('show'),1500)};
 
@@ -199,115 +247,82 @@ const save=()=>localStorage.setItem(STORAGE,JSON.stringify(data));
 const load=()=>{try{const raw=localStorage.getItem(STORAGE);if(raw){const arr=JSON.parse(raw);if(Array.isArray(arr))return arr}}catch(e){}return null};
 function csvEscape(s){if(s==null)s='';s=String(s);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
 
-// ===== 学習（Flash/MCQ + 再出題 + 順序） =====
+// ===== 学習（Flash/MCQ + 再出題 + 並び） =====
 let session={list:[],i:0,mode:'flash',correct:0,wrong:0,showingAnswer:false,started:false,qKey:'code',aKey:'name',requeueWrong:true,order:'random'};
+
 const labelFor=k=>({code:'コード',name:'経穴名',location:'位置',indications:'主治'})[k]||k;
+
 function applyPreset(){const p=PRESETS[el('qaPreset').value]||PRESETS['code->name'];session.qKey=p.qKey;session.aKey=p.aKey}
+
+function getSelectedMeridians(){
+  const sel=el('filterMeridians'); if(!sel) return [];
+  return Array.from(sel.selectedOptions).map(o=>o.value).filter(Boolean);
+}
+
 function applyPresetAndFilterPool(){
-  applyPreset(); session.requeueWrong=el('requeueWrong').checked; session.order=el('order').value;
-  const mer=el('filterMeridian').value, shu=el('filterShu').value, phase=el('filterPhase').value;
+  applyPreset();
+  session.requeueWrong=el('requeueWrong').checked;
+  session.order=el('order').value;
+
+  const selectedMers=new Set(getSelectedMeridians());
+  const shu=el('filterShu').value;
+  const phase=el('filterPhase').value;
+  const codeSet=parseCodeFilter(el('filterCodes').value);
+
   let pool=data.slice();
-  if(mer)pool=pool.filter(x=>x.meridian===mer);
-  if(shu)pool=pool.filter(x=>(x.shu||'')===shu);
-  if(phase)pool=pool.filter(x=>(x.phase||'')===phase);
+
+  // 経絡複数選択
+  if(selectedMers.size>0) pool=pool.filter(x=>selectedMers.has(x.meridian||''));
+
+  // コード複数指定
+  if(codeSet.size>0) pool=pool.filter(x=>codeSet.has((x.code||'').toUpperCase()));
+
+  if(shu)   pool=pool.filter(x=>(x.shu||'')===shu);
+  if(phase) pool=pool.filter(x=>(x.phase||'')===phase);
+
+  // 出題キーが双方あるものに限定
   pool=pool.filter(x=>(x[session.qKey]||'').trim()&&(x[session.aKey]||'').trim());
-  if(session.order==='code'){ pool.sort((a,b)=>(a.code||'').localeCompare(b.code||'')); }
+
+  // 並び（コード順＝CV→GV→十二正経、数値昇順）
+  if(session.order==='code'){
+    pool.sort((a,b)=>{
+      const pa=codeParts(a.code||''), pb=codeParts(b.code||'');
+      const ra=prefixRank(pa.prefix), rb=prefixRank(pb.prefix);
+      if(ra!==rb) return ra-rb;
+      if(pa.num!==pb.num) return pa.num-pb.num;
+      return (pa.raw||'').localeCompare(pb.raw||'');
+    });
+  }else{
+    // ランダムシャッフル
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+  }
+
   return pool;
 }
+
 function start(){
   session.mode=el('mode').value;
   const limit=Math.max(5,Math.min(200,parseInt(el('limit').value||'20',10)));
   let pool=applyPresetAndFilterPool();
-  if(session.order==='random'){
-    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
-  }
   session.list=pool.slice(0,limit);session.i=0;session.correct=0;session.wrong=0;session.showingAnswer=false;session.started=session.list.length>0;
   if(!session.started){el('qText').textContent='該当データがありません';el('aText').textContent='出題形式・絞り込み・CSVをご確認ください';el('subText').textContent='';el('mcqArea').classList.add('hidden');el('progress').textContent='';return}
   if(session.mode==='mcq') showMCQ(); else showFront();
   updateProgress()
 }
 function current(){return session.list[session.i]}
-function showFront(){
-  const it=current(); el('qText').textContent=labelFor(session.qKey)+'：'+(it[session.qKey]||'—');
-  el('aText').innerHTML=''; el('subText').textContent='クリック／Enter／Space で裏面表示'; el('mcqArea').classList.add('hidden'); session.showingAnswer=false
-}
-function showBack(){
-  const it=current(); el('qText').textContent=labelFor(session.aKey)+'：'+(it[session.aKey]||'—');
-  const sp=(it.shu&&it.phase)?`<span class="pill alt">五兪：${it.shu}</span><span class="pill alt">五行：${it.phase}</span>`:'';
-  el('aText').innerHTML=`<span class="pill">${it.code||''}</span><span class="pill">${it.meridian||''}</span>${sp}
-    <div><b>経穴名：</b>${it.name||'—'}</div>
-    <div><b>位置：</b>${it.location||'—'}</div>
-    <div><b>主治：</b>${it.indications||'—'}</div>
-    <div><b>その他：</b>${it.memo||'—'}</div>`;
-  el('subText').textContent='もう一度で表へ'; el('mcqArea').classList.add('hidden'); session.showingAnswer=true
-}
-function flip(){ if(!session.started||!session.list.length){alert('まず「開始」を押してください');return} if(session.mode==='mcq'){return} if(session.showingAnswer)showFront();else showBack() }
+function showFront(){const it=current();el('qText').textContent=labelFor(session.qKey)+'：'+(it[session.qKey]||'—');el('aText').innerHTML='';el('subText').textContent='クリック／Enter／Space で裏面表示';el('mcqArea').classList.add('hidden');session.showingAnswer=false}
+function showBack(){const it=current();el('qText').textContent=labelFor(session.aKey)+'：'+(it[session.aKey]||'—');const sp=(it.shu&&it.phase)?`<span class="pill alt">五兪：${it.shu}</span><span class="pill alt">五行：${it.phase}</span>`:'';el('aText').innerHTML=`<span class="pill">${it.code||''}</span><span class="pill">${it.meridian||''}</span>${sp}<div><b>経穴名：</b>${it.name||'—'}</div><div><b>位置：</b>${it.location||'—'}</div><div><b>主治：</b>${it.indications||'—'}</div><div><b>その他：</b>${it.memo||'—'}</div>`;el('subText').textContent='もう一度で表へ';el('mcqArea').classList.add('hidden');session.showingAnswer=true}
+function flip(){if(!session.started||!session.list.length){alert('まず「開始」を押してください');return}if(session.mode==='mcq'){return}if(session.showingAnswer)showFront();else showBack()}
 function updateProgress(){el('progress').textContent=`進捗：${session.i+1}/${session.list.length}（正 ${session.correct}・誤 ${session.wrong}）`}
-function handleWrongRequeue(it){
-  if(!session.requeueWrong) return;
-  // 末尾に複製を1回だけ追加（無限増殖防止のため key で上限管理も可能）
-  session.list.push(it);
-}
-function next(){
-  session.i++;
-  if(session.i>=session.list.length){
-    el('qText').textContent='セッション完了！';
-    el('aText').textContent=`正解 ${session.correct} / 不正解 ${session.wrong}`;
-    el('subText').textContent=''; el('mcqArea').classList.add('hidden'); el('progress').textContent=''; session.started=false; return
-  }
-  if(session.mode==='mcq') showMCQ(); else showFront();
-  updateProgress()
-}
-function markResult(ok){
-  if(!session.started||!session.list.length){alert('まず「開始」を押してください');return}
-  const it=current();
-  if(ok){session.correct++;toast('正解')}else{session.wrong++;toast('不正解');handleWrongRequeue(it)}
-  next()
-}
+function handleWrongRequeue(it){if(!session.requeueWrong) return;session.list.push(it)}
+function next(){session.i++;if(session.i>=session.list.length){el('qText').textContent='セッション完了！';el('aText').textContent=`正解 ${session.correct} / 不正解 ${session.wrong}`;el('subText').textContent='';el('mcqArea').classList.add('hidden');el('progress').textContent='';session.started=false;return}if(session.mode==='mcq')showMCQ();else showFront();updateProgress()}
+function markResult(ok){if(!session.started||!session.list.length){alert('まず「開始」を押してください');return}const it=current();if(ok){session.correct++;toast('正解')}else{session.wrong++;handleWrongRequeue(it);toast('不正解')}next()}
 // クリック/Enter/Spaceでフリップ or 開始
-(function enableFlipShortcuts(){
-  const flash=el('flash');
-  flash.addEventListener('click',()=>{ if(!session.started){ start(); } else if(session.mode==='flash'){ flip(); } });
-  document.addEventListener('keydown',e=>{
-    if(e.key==='Enter'||e.key===' '){
-      e.preventDefault();
-      if(!session.started){ start(); } else if(session.mode==='flash'){ flip(); }
-    }
-  });
-})();
+(function enableFlipShortcuts(){const flash=el('flash');flash.addEventListener('click',()=>{if(!session.started){start()}else if(session.mode==='flash'){flip()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!session.started){start()}else if(session.mode==='flash'){flip()}}});})();
 
 // ===== 四択（MCQ） =====
-function showMCQ(){
-  const it=current();
-  el('qText').textContent=labelFor(session.qKey)+'：'+(it[session.qKey]||'—');
-  el('aText').textContent=''; el('subText').textContent='';
-  const opts=pickOptions(it,session.aKey);
-  const area=el('mcqArea'); area.innerHTML=''; area.classList.remove('hidden');
-  opts.forEach(o=>{
-    const btn=document.createElement('button'); btn.className='btn'; btn.type='button';
-    btn.textContent=o[session.aKey]||'（未設定）';
-    btn.onclick=()=>{
-      if(btn.dataset.done){ next(); return }
-      if(o===it){ btn.classList.add('correct'); session.correct++; toast('正解') }
-      else{ btn.classList.add('wrong'); session.wrong++; handleWrongRequeue(it); toast('不正解') }
-      btn.dataset.done='1'; setTimeout(next,320);
-    };
-    area.appendChild(btn);
-  });
-}
-function pickOptions(target,aKey){
-  const pool=data.filter(x=>(x[aKey]||'').trim());
-  const uniq=[]; const seen=new Set();
-  for(const x of pool){const v=x[aKey];if(!seen.has(v)){uniq.push(x);seen.add(v)}}
-  const opts=[target];
-  while(opts.length<4&&uniq.length){
-    const idx=Math.floor(Math.random()*uniq.length); const cand=uniq.splice(idx,1)[0];
-    if(cand[aKey]!==target[aKey]) opts.push(cand);
-  }
-  while(opts.length<4) opts.push(target);
-  for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}
-  return opts;
-}
+function showMCQ(){const it=current();el('qText').textContent=labelFor(session.qKey)+'：'+(it[session.qKey]||'—');el('aText').textContent='';el('subText').textContent='';const opts=pickOptions(it,session.aKey);const area=el('mcqArea');area.innerHTML='';area.classList.remove('hidden');opts.forEach(o=>{const btn=document.createElement('button');btn.className='btn';btn.type='button';btn.textContent=o[session.aKey]||'（未設定）';btn.onclick=()=>{if(btn.dataset.done){next();return}if(o===it){btn.classList.add('correct');session.correct++;toast('正解')}else{btn.classList.add('wrong');session.wrong++;handleWrongRequeue(it);toast('不正解')}btn.dataset.done='1';setTimeout(next,320)};area.appendChild(btn)})}
+function pickOptions(target,aKey){const pool=data.filter(x=>(x[aKey]||'').trim());const uniq=[];const seen=new Set();for(const x of pool){const v=x[aKey];if(!seen.has(v)){uniq.push(x);seen.add(v)}}const opts=[target];while(opts.length<4&&uniq.length){const idx=Math.floor(Math.random()*uniq.length);const cand=uniq.splice(idx,1)[0];if(cand[aKey]!==target[aKey])opts.push(cand)}while(opts.length<4)opts.push(target);for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}return opts}
 
 // ===== データ管理 =====
 function keyOf(d){return d.code||d.name||''}
@@ -315,91 +330,17 @@ function indexByKey(k){return data.findIndex(x=>keyOf(x)===k)}
 function deriveAndFill(d){const a=deriveShuPhase(d);return {...d,shu:d.shu||a.shu,phase:d.phase||a.phase}}
 function normalizeRow(tr){const obj={};tr.querySelectorAll('[data-key]').forEach(td=>obj[td.dataset.key]=td.textContent.trim());const a=deriveShuPhase(obj);if(!obj.shu)obj.shu=a.shu;if(!obj.phase)obj.phase=a.phase;return obj}
 function applyEdit(tr,oldKey){const obj=normalizeRow(tr);const newKey=obj.code||obj.name||'';let idx=indexByKey(oldKey);if(idx===-1)idx=indexByKey(newKey);if(idx===-1){data.push(obj)}else{data[idx]={...data[idx],...obj}}save();tr.querySelector('.chkRow').dataset.key=newKey}
-function renderTable(){
-  const q=(el('txtFind')?.value||'').trim().toLowerCase();
-  filtered=data.filter(d=>{
-    if(!q) return true;
-    const s=`${d.code||''} ${d.name||''} ${d.meridian||''} ${d.reading||''} ${d.location||''} ${d.indications||''} ${d.memo||''} ${d.shu||''} ${d.phase||''}`.toLowerCase();
-    return s.includes(q);
-  });
-  const tb=el('tbody'); if(!tb) return; tb.innerHTML='';
-  for(const d of filtered){
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td><input type="checkbox" class="chkRow" data-key="${d.code||d.name||''}"></td>
-      <td contenteditable="true" data-key="code">${d.code||''}</td>
-      <td contenteditable="true" data-key="name">${d.name||''}</td>
-      <td contenteditable="true" data-key="meridian">${d.meridian||''}</td>
-      <td contenteditable="true" data-key="reading">${d.reading||''}</td>
-      <td contenteditable="true" data-key="location">${d.location||''}</td>
-      <td contenteditable="true" data-key="indications">${d.indications||''}</td>
-      <td contenteditable="true" data-key="memo">${d.memo||''}</td>
-      <td contenteditable="true" data-key="shu">${d.shu||''}</td>
-      <td contenteditable="true" data-key="phase">${d.phase||''}</td>
-      <td class="row-actions">
-        <button class="btn" data-act="dup" data-key="${d.code||d.name||''}" type="button">複製</button>
-        <button class="btn danger" data-act="del" data-key="${d.code||d.name||''}" type="button">削除</button>
-      </td>`;
-    tb.appendChild(tr);
-  }
-  el('info').textContent=`登録：${data.length}件 / 表示：${filtered.length}件`;
-  const all=el('chkAll'); if(all) all.checked=false;
-}
-function refresh(){data=data.map(deriveAndFill);const mer=Array.from(new Set(data.map(d=>d.meridian).filter(Boolean))).sort();el('filterMeridian').innerHTML='<option value=\"\">（すべて）</option>'+mer.map(m=>`<option>${m}</option>`).join('');renderTable()}
+function renderTable(){const q=(el('txtFind')?.value||'').trim().toLowerCase();filtered=data.filter(d=>{if(!q)return true;const s=`${d.code||''} ${d.name||''} ${d.meridian||''} ${d.reading||''} ${d.location||''} ${d.indications||''} ${d.memo||''} ${d.shu||''} ${d.phase||''}`.toLowerCase();return s.includes(q)});const tb=el('tbody');if(!tb)return;tb.innerHTML='';for(const d of filtered){const tr=document.createElement('tr');tr.innerHTML=`<td><input type="checkbox" class="chkRow" data-key="${d.code||d.name||''}"></td><td contenteditable="true" data-key="code">${d.code||''}</td><td contenteditable="true" data-key="name">${d.name||''}</td><td contenteditable="true" data-key="meridian">${d.meridian||''}</td><td contenteditable="true" data-key="reading">${d.reading||''}</td><td contenteditable="true" data-key="location">${d.location||''}</td><td contenteditable="true" data-key="indications">${d.indications||''}</td><td contenteditable="true" data-key="memo">${d.memo||''}</td><td contenteditable="true" data-key="shu">${d.shu||''}</td><td contenteditable="true" data-key="phase">${d.phase||''}</td><td class="row-actions"><button class="btn" data-act="dup" data-key="${d.code||d.name||''}" type="button">複製</button><button class="btn danger" data-act="del" data-key="${d.code||d.name||''}" type="button">削除</button></td>`;tb.appendChild(tr)}el('info').textContent=`登録：${data.length}件 / 表示：${filtered.length}件`;const all=el('chkAll');if(all)all.checked=false}
+function refresh(){data=data.map(deriveAndFill);const mer=Array.from(new Set(data.map(d=>d.meridian).filter(Boolean))).sort((a,b)=>a.localeCompare(b));const sel=el('filterMeridians');sel.innerHTML='';const allOpt=document.createElement('option');allOpt.value='';allOpt.textContent='（未選択＝全て対象）';sel.appendChild(allOpt);for(const m of mer){const o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o)}renderTable()}
 
 // インポート（ファイル）
-async function importFromFile(file){
-  const buf=await file.arrayBuffer();const text=new TextDecoder('utf-8',{fatal:false}).decode(buf);let arr=[];
-  try{
-    if(file.name.endsWith('.json')){
-      const j=JSON.parse(text);
-      arr=j.map(x=>({code:x.id||x.code||x['コード']||'',name:x['経穴名']||x.name||'',meridian:x['経絡']||x.meridian||'',reading:x['読み']||x['経穴名_読み']||x.reading||'',location:x['位置']||x['部位メモ']||x.location||'',indications:x['主治']||x['主治メモ']||x.indications||'',memo:x['その他メモ']||x.memo||'',shu:x['五兪穴']||x.shu||'',phase:x['五行']||x.phase||''}));
-    }else{
-      const rows=text.replace(/，/g,',').replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim().length>0);
-      const headers=rows.shift().split(',').map(s=>s.trim());const ix=k=>headers.indexOf(k);
-      for(const line of rows){
-        const r=line.split(',');
-        let o;
-        if(headers.includes('コード')) o={code:r[ix('コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};
-        else if(headers.includes('id')) o={code:r[ix('id')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('部位メモ')]||'',indications:r[ix('主治メモ')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};
-        else o={code:r[ix('経穴コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡名')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:'',shu:'',phase:''};
-        const a=deriveShuPhase(o); if(!o.shu)o.shu=a.shu; if(!o.phase)o.phase=a.phase; arr.push(o);
-      }
-    }
-  }catch(e){ alert('インポートに失敗：'+e.message); return }
-  const mp=new Map(data.map(x=>[x.code||x.name,x])); let add=0,upd=0;
-  for(const it of arr){const key=it.code||it.name;if(!key)continue;if(mp.has(key)){mp.set(key,{...mp.get(key),...it});upd++}else{mp.set(key,it);add++}}
-  data=Array.from(mp.values()); save(); refresh(); toast(`インポート：追加 ${add}・更新 ${upd}・全 ${data.length}`);
-}
+async function importFromFile(file){const buf=await file.arrayBuffer();const text=new TextDecoder('utf-8',{fatal:false}).decode(buf);let arr=[];try{if(file.name.endsWith('.json')){const j=JSON.parse(text);arr=j.map(x=>({code:x.id||x.code||x['コード']||'',name:x['経穴名']||x.name||'',meridian:x['経絡']||x.meridian||'',reading:x['読み']||x['経穴名_読み']||x.reading||'',location:x['位置']||x['部位メモ']||x.location||'',indications:x['主治']||x['主治メモ']||x.indications||'',memo:x['その他メモ']||x.memo||'',shu:x['五兪穴']||x.shu||'',phase:x['五行']||x.phase||''}))}else{const rows=text.replace(/，/g,',').replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim().length>0);const headers=rows.shift().split(',').map(s=>s.trim());const ix=k=>headers.indexOf(k);for(const line of rows){const r=line.split(',');let o;if(headers.includes('コード'))o={code:r[ix('コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};else if(headers.includes('id'))o={code:r[ix('id')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('部位メモ')]||'',indications:r[ix('主治メモ')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};else o={code:r[ix('経穴コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡名')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:'',shu:'',phase:''};const a=deriveShuPhase(o);if(!o.shu)o.shu=a.shu;if(!o.phase)o.phase=a.phase;arr.push(o)}}catch(e){alert('インポートに失敗：'+e.message);return}const mp=new Map(data.map(x=>[x.code||x.name,x]));let add=0,upd=0;for(const it of arr){const key=it.code||it.name;if(!key)continue;if(mp.has(key)){mp.set(key,{...mp.get(key),...it});upd++}else{mp.set(key,it);add++}}data=Array.from(mp.values());save();refresh();toast(`インポート：追加 ${add}・更新 ${upd}・全 ${data.length}`)}
 
 // インポート（一括貼り付け）
-function importFromText(text){
-  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim().length>0);
-  if(!lines.length) return 0;
-  const headers=lines[0].includes(',')?lines.shift().split(',').map(s=>s.trim()):['コード','経穴名','経絡','読み','位置','主治','その他メモ','五兪穴','五行'];
-  const ix=k=>headers.indexOf(k);
-  let count=0; const mp=new Map(data.map(x=>[x.code||x.name,x]));
-  for(const line of lines){
-    const r=line.split(',');
-    const o={code:r[ix('コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};
-    const a=deriveShuPhase(o); if(!o.shu)o.shu=a.shu; if(!o.phase)o.phase=a.phase;
-    const key=o.code||o.name; if(!key) continue;
-    mp.set(key,{...(mp.get(key)||{}),...o}); count++;
-  }
-  data=Array.from(mp.values()); save(); refresh(); return count;
-}
+function importFromText(text){const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim().length>0);if(!lines.length)return 0;const headers=lines[0].includes(',')?lines.shift().split(',').map(s=>s.trim()):['コード','経穴名','経絡','読み','位置','主治','その他メモ','五兪穴','五行'];const ix=k=>headers.indexOf(k);let count=0;const mp=new Map(data.map(x=>[x.code||x.name,x]));for(const line of lines){const r=line.split(',');const o={code:r[ix('コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};const a=deriveShuPhase(o);if(!o.shu)o.shu=a.shu;if(!o.phase)o.phase=a.phase;const key=o.code||o.name;if(!key)continue;mp.set(key,{...(mp.get(key)||{}),...o});count++}data=Array.from(mp.values());save();refresh();return count}
 
 // ===== 初期データ =====
-async function importSeed(){
-  try{
-    const saved=load(); if(saved&&saved.length){ data=saved; return }
-    const res=await fetch('./seed.json',{cache:'no-store'});
-    if(!res.ok) throw new Error('seed.json 読み込み失敗');
-    const arr=await res.json();
-    data=arr.map(x=>({code:x.code||x['コード']||x.id||'',name:x.name||x['経穴名']||'',meridian:x.meridian||x['経絡']||'',reading:x.reading||x['読み']||x['経穴名_読み']||'',location:x.location||x['位置']||x['部位メモ']||'',indications:x.indications||x['主治']||x['主治メモ']||'',memo:x.memo||x['その他メモ']||'',shu:x.shu||x['五兪穴']||'',phase:x.phase||x['五行']||''}));
-    data=data.map(deriveAndFill); save();
-  }catch(e){ alert('初期データの読込に失敗：'+e.message); data=[]; save(); }
-}
+async function importSeed(){try{const saved=load();if(saved&&saved.length){data=saved;return}const res=await fetch('./seed.json',{cache:'no-store'});if(!res.ok)throw new Error('seed.json 読み込み失敗');const arr=await res.json();data=arr.map(x=>({code:x.code||x['コード']||x.id||'',name:x.name||x['経穴名']||'',meridian:x.meridian||x['経絡']||'',reading:x.reading||x['読み']||x['経穴名_読み']||'',location:x.location||x['位置']||x['部位メモ']||'',indications:x.indications||x['主治']||x['主治メモ']||'',memo:x.memo||x['その他メモ']||'',shu:x.shu||x['五兪穴']||'',phase:x.phase||x['五行']||''}));data=data.map(deriveAndFill);save()}catch(e){alert('初期データの読込に失敗：'+e.message);data=[];save()}}
 
 // ===== 初期化 =====
 (async function init(){
@@ -408,28 +349,16 @@ async function importSeed(){
   el('tabManage').onclick=()=>show('viewManage','tabManage');
   el('tabAbout').onclick=()=>show('viewAbout','tabAbout');
 
-  // 学習
+  // 学習ボタン
   el('btnStart').onclick=start; el('btnFlip').onclick=flip;
   el('btnRight').onclick=()=>markResult(true); el('btnWrong').onclick=()=>markResult(false);
 
-  // データ管理
+  // クリック/キー
+  const flash=el('flash');flash.addEventListener('click',()=>{if(!session.started){start()}else if(session.mode==='flash'){flip()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!session.started){start()}else if(session.mode==='flash'){flip()}}});
+
+  // データ管理イベント
   const tb=el('tbody');
-  tb.addEventListener('click',e=>{
-    const btn=e.target.closest('button[data-act]'); if(!btn) return;
-    const key=btn.dataset.key;
-    if(btn.dataset.act==='del'){
-      if(confirm('削除しますか？')){const i=data.findIndex(x=>(x.code||x.name)===key); if(i!==-1){data.splice(i,1); save(); refresh(); toast('削除しました')}}}
-    else if(btn.dataset.act==='dup'){
-      const i=data.findIndex(x=>(x.code||x.name)===key); if(i===-1) return;
-      const src=data[i]; let c=(src.code||src.name||'COPY')+'_copy',k=1; while(data.some(x=>(x.code||x.name)===c)){ c=(src.code||src.name||'COPY')+'_copy'+(++k) }
-      data.splice(i+1,0,{...src,code:c}); save(); refresh(); toast('複製しました');
-    }
-  });
-  tb.addEventListener('blur',e=>{
-    const td=e.target.closest('td[contenteditable=true]'); if(!td) return;
-    const tr=td.closest('tr'); const oldKey=tr.querySelector('.chkRow')?.dataset.key||''; applyEdit(tr,oldKey);
-  },true);
-  el('chkAll').addEventListener('change',e=>{document.querySelectorAll('.chkRow').forEach(ch=>ch.checked=e.target.checked)});
+  tb.addEventListener('click',e=>{const btn=e.target.closest('button[data-act]');if(!btn)return;const key=btn.dataset.key;if(btn.dataset.act==='del'){if(confirm('削除しますか？')){const i=data.findIndex(x=>(x.code||x.name)===key);if(i!==-1){data.splice(i,1);save();refresh();toast('削除しました')}}}else if(btn.dataset.act==='dup'){const i=data.findIndex(x=>(x.code||x.name)===key);if(i===-1)return;const src=data[i];let c=(src.code||src.name||'COPY')+'_copy',k=1;while(data.some(x=>(x.code||x.name)===c)){c=(src.code||src.name||'COPY')+'_copy'+(++k)}data.splice(i+1,0,{...src,code:c});save();refresh();toast('複製しました')}});tb.addEventListener('blur',e=>{const td=e.target.closest('td[contenteditable=true]');if(!td)return;const tr=td.closest('tr');const oldKey=tr.querySelector('.chkRow')?.dataset.key||'';applyEdit(tr,oldKey)},true);el('chkAll').addEventListener('change',e=>{document.querySelectorAll('.chkRow').forEach(ch=>ch.checked=e.target.checked)});
   el('btnAdd').onclick=function(){let base='NEW',n=1;while(data.some(x=>(x.code||x.name)===(base+n)))n++;data.unshift({code:base+n,name:'',meridian:'',reading:'',location:'',indications:'',memo:'',shu:'',phase:''});save();refresh()};
   el('btnDeleteSel').onclick=function(){const keys=Array.from(document.querySelectorAll('.chkRow:checked')).map(c=>c.dataset.key);if(!keys.length){alert('削除する行にチェックを付けてください');return}if(!confirm(keys.length+' 行を削除しますか？'))return;data=data.filter(x=>!keys.includes(x.code||x.name));save();refresh();toast('削除しました')};
   el('btnExportCSV').onclick=function(){const headers=['コード','経穴名','経絡','読み','位置','主治','その他メモ','五兪穴','五行'];const lines=[headers.join(',')];for(const d of data){const row=[d.code||'',d.name||'',d.meridian||'',d.reading||'',d.location||'',d.indications||'',d.memo||'',d.shu||'',d.phase||''].map(csvEscape).join(',');lines.push(row)}const BOM='\ufeff';const blob=new Blob([BOM+lines.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='keiketsu_data_v8.csv';a.click();URL.revokeObjectURL(url);toast('CSVを書き出しました')};
