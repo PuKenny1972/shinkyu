@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Keiketsu Mini v8（複数選択 + 並び強化）</title>
+<title>Keiketsu Mini v8.2（シンプルUI）</title>
 <meta name="theme-color" content="#0ea5e9"/>
 <link rel="apple-touch-icon" href="icon-180.png"><link rel="manifest" href="manifest.json">
 <script>if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));}</script>
@@ -15,12 +15,11 @@ nav{margin-left:auto;display:flex;gap:8px}
 nav button{border:1px solid var(--border);background:#fff;padding:8px 10px;border-radius:10px;font-size:14px;cursor:pointer}
 nav button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 main{padding:14px;max-width:1240px;margin:0 auto}
-.toolbar{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;align-items:center;margin-bottom:12px}
-.toolbar > *{grid-column:span 3} .toolbar .wide{grid-column:span 6} .toolbar .full{grid-column:1/-1}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 select,input,button,textarea{font-size:14px}
 select,input[type=number],input[type=file],input[type=text],textarea{padding:8px;border:1px solid var(--border);border-radius:10px;background:#fff}
 .btn{padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer}
-.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.primary{background:var(--primary);color:#fff;border-color:#0ea5e9}
 .btn.success{background:#10b981;color:#fff;border-color:#10b981}
 .btn.warn{background:#f59e0b;color:#fff;border-color:#f59e0b}
 .btn.danger{background:#ef4444;color:#fff;border-color:#ef4444}
@@ -32,7 +31,7 @@ th{background:#f1f5f9;position:sticky;top:0;z-index:1}
 .hidden{display:none}.small{font-size:12px;color:#6b7280}
 .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#e0f2fe;color:#075985;font-size:12px;margin-right:6px}
 .pill.alt{background:#ecfdf5;color:#065f46}
-.flash-area{min-height:270px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;text-align:center;transition:box-shadow .2s}
+.flash-area{min-height:270px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;text-align:center}
 .q{font-size:22px;font-weight:700}.a{font-size:16px}
 .mcq{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
 .mcq button{text-align:left}
@@ -44,22 +43,20 @@ th.col-code,td[data-key=code]{width:86px}th.col-name,td[data-key=name]{width:120
 th.col-shu,td[data-key=shu]{width:56px}th.col-phase,td[data-key=phase]{width:56px}
 th.col-location,td[data-key=location],th.col-indications,td[data-key=indications],th.col-memo,td[data-key=memo]{width:420px;white-space:normal!important;word-break:break-word;overflow-wrap:anywhere}
 .badge{margin-left:8px;padding:2px 8px;border-radius:999px;background:#ecfccb;color:#3f6212;border:1px solid #d9f99d;font-size:12px}
-label small{color:#6b7280}
 </style>
 </head>
 <body>
   <header>
-    <h1>Keiketsu Mini v8（複数選択 + 並び強化）<span id="badge" class="badge">JS OK</span></h1>
+    <h1>Keiketsu Mini v8.2（シンプルUI）<span id="badge" class="badge">JS OK</span></h1>
     <nav>
-      <button id="tabStudy" class="active" onclick="try{show('viewStudy','tabStudy')}catch(e){}">学習</button>
-      <button id="tabManage" onclick="try{show('viewManage','tabManage')}catch(e){}">データ管理</button>
-      <button id="tabAbout" onclick="try{show('viewAbout','tabAbout')}catch(e){}">説明</button>
+      <button id="tabStudy" class="active">学習</button>
+      <button id="tabManage">データ管理</button>
+      <button id="tabAbout">説明</button>
     </nav>
   </header>
 
   <main>
     <section id="viewStudy">
-      <!-- 学習ツールバー -->
       <div class="toolbar">
         <label>モード
           <select id="mode">
@@ -82,59 +79,41 @@ label small{color:#6b7280}
             <option value="code">コード順（CV→GV→十二正経）</option>
           </select>
         </label>
-
-        <label class="wide">経絡（複数選択可）
-          <select id="filterMeridians" multiple size="6" style="width:100%">
-            <!-- JSで埋め込み -->
-          </select><br><small>⌘/Ctrl で複数選択</small>
-        </label>
-
-        <label class="wide">コード指定（複数）<br>
-          <textarea id="filterCodes" rows="3" placeholder="例）CV1-10, LU5 ST36&#10;カンマ/空白/改行区切り、範囲OK" style="width:100%"></textarea>
-        </label>
-
-        <label>五兪穴
-          <select id="filterShu">
-            <option value="">（指定なし）</option><option>井</option><option>滎</option><option>兪</option><option>経</option><option>合</option>
+        <label>経絡
+          <select id="filterMeridian">
+            <option value="">（すべて）</option>
           </select>
+        </label>
+        <label>五兪穴
+          <select id="filterShu"><option value="">（指定なし）</option><option>井</option><option>滎</option><option>兪</option><option>経</option><option>合</option></select>
         </label>
         <label>五行
-          <select id="filterPhase">
-            <option value="">（指定なし）</option><option>木</option><option>火</option><option>土</option><option>金</option><option>水</option>
-          </select>
+          <select id="filterPhase"><option value="">（指定なし）</option><option>木</option><option>火</option><option>土</option><option>金</option><option>水</option></select>
         </label>
-
-        <label>出題数 <input type="number" id="limit" min="5" max="200" value="20" style="width:100%"></label>
-        <label class="full"><input type="checkbox" id="requeueWrong" checked> 間違えた問題を最後に再出題</label>
-
-        <button class="btn primary" id="btnStart" type="button" onclick="try{start()}catch(e){alert(e)}">開始</button>
+        <label>出題数 <input type="number" id="limit" min="5" max="200" value="20" style="width:80px"></label>
+        <label><input type="checkbox" id="requeueWrong" checked> 間違えた問題を最後に再出題</label>
+        <button class="btn primary" id="btnStart" type="button">開始</button>
         <span class="small" id="info"></span>
       </div>
 
       <div class="card">
-        <div class="flash-area" id="flash" tabindex="0">
+        <div class="flash-area" id="flash" tabindex="0" aria-label="flashcard">
           <div class="q" id="qText">「開始」を押してください</div>
           <div class="a" id="aText"></div>
           <div class="small" id="subText"></div>
           <div class="mcq hidden" id="mcqArea"></div>
         </div>
-        <div class="toolbar" style="grid-template-columns:repeat(12,1fr);gap:12px;align-items:center">
-          <button class="btn" id="btnFlip" type="button" onclick="try{flip()}catch(e){alert(e)}">答えを表示/裏面にする</button>
-          <button class="btn danger" id="btnWrong" type="button" onclick="try{markResult(false)}catch(e){alert(e)}">× わからない</button>
-          <button class="btn success" id="btnRight" type="button" onclick="try{markResult(true)}catch(e){alert(e)}">○ 正解</button>
-          <div class="small" id="progress" style="grid-column:span 9"></div>
+        <div class="toolbar" style="justify-content:center;gap:12px;">
+          <button class="btn" id="btnFlip" type="button">答えを表示/裏面にする</button>
+          <button class="btn danger" id="btnWrong" type="button">× わからない</button>
+          <button class="btn success" id="btnRight" type="button">○ 正解</button>
         </div>
-      </div>
-
-      <div class="small" style="color:#374151">
-        ・初回に <code>seed.json</code> を読み込み → 以後は端末ローカル保存。<br>
-        ・五兪穴/五行は12正経のみ自動判定（任督は対象外）。<br>
-        ・カード領域をクリック / Enter / Space でフリップ。
+        <div class="small" id="progress"></div>
       </div>
     </section>
 
     <section id="viewManage" class="hidden">
-      <div class="toolbar" style="grid-template-columns:repeat(12,1fr)">
+      <div class="toolbar">
         <input type="file" id="fileInput" accept=".csv,.json">
         <button class="btn" id="btnImport" type="button">インポート</button>
         <button class="btn" id="btnAdd" type="button">行を追加</button>
@@ -142,7 +121,7 @@ label small{color:#6b7280}
         <button class="btn danger" id="btnDeleteSel" type="button">選択行を削除</button>
         <button class="btn" id="btnExportCSV" type="button">CSVを書き出し</button>
         <button class="btn" id="btnExportJSON" type="button">JSONを書き出し</button>
-        <input class="wide" type="text" id="txtFind" placeholder="検索（コード/経穴名/位置/主治/その他/五兪穴/五行）">
+        <input type="text" id="txtFind" placeholder="検索（コード/経穴名/位置/主治/その他/五兪穴/五行）" style="flex:1;min-width:200px">
       </div>
       <div class="grid" style="margin-top:10px">
         <table>
@@ -158,10 +137,11 @@ label small{color:#6b7280}
     </section>
 
     <section id="viewAbout" class="hidden">
-      <div class="card"><h3>このアプリについて（v8 複数選択版）</h3>
+      <div class="card"><h3>このアプリについて（v8.2）</h3>
         <ul>
-          <li>経絡と経穴コードの複数指定フィルタに対応。</li>
-          <li>コード順は CV→GV→十二正経（LU→LI→ST→SP→HT→SI→BL→KI→PC→SJ→GB→LV）で数値昇順。</li>
+          <li>コード順は <b>CV→GV→十二正経（LU→LI→ST→SP→HT→SI→BL→KI→PC→SJ→GB→LV）</b> の数値昇順。</li>
+          <li>四択、再出題、一括貼り付け、編集／複製／選択削除／検索 に対応。</li>
+          <li>「全データ削除」ボタンはありません。</li>
         </ul>
       </div>
     </section>
@@ -184,14 +164,16 @@ label small{color:#6b7280}
 // ===== 安全ガード =====
 window.onerror=(m)=>alert('JS Error: '+m);
 
-// ===== ユーティリティ/定数 =====
-const el=id=>document.getElementById(id);
+// ===== タブ切替（データ管理/説明が効かない対策） =====
 function show(viewId,tabId){
   ['viewStudy','viewManage','viewAbout'].forEach(id=>document.getElementById(id).classList.add('hidden'));
   document.getElementById(viewId).classList.remove('hidden');
   ['tabStudy','tabManage','tabAbout'].forEach(id=>document.getElementById(id).classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
 }
+
+// ===== ユーティリティ/定数 =====
+const el=id=>document.getElementById(id);
 const STORAGE='keiketsu-mini-v8';
 const YIN=new Set(['手の太陰肺経','手の厥陰心包経','手の少陰心経','足の太陰脾経','足の少陰腎経','足の厥陰肝経']);
 const PHASE_SEQ_YIN=['木','火','土','金','水'];const PHASE_SEQ_YANG=['金','水','木','火','土'];
@@ -208,24 +190,7 @@ function codeParts(code){
 // 並び優先：CV→GV→LU→LI→ST→SP→HT→SI→BL→KI→PC→SJ→GB→LV
 const PREFIX_ORDER=['CV','GV','LU','LI','ST','SP','HT','SI','BL','KI','PC','SJ','GB','LV'];
 const PREFIX_RANK=Object.fromEntries(PREFIX_ORDER.map((p,i)=>[p,i]));
-function prefixRank(p){p=(p||'').toUpperCase();return (p in PREFIX_RANK)?PREFIX_RANK[p]:999}
-
-// ユーザー入力コードのパース（カンマ/空白/改行、範囲 CV1-10）
-function parseCodeFilter(text){
-  const tokens=(text||'').toUpperCase().split(/[\s,]+/).map(s=>s.trim()).filter(Boolean);
-  const set=new Set();
-  for(const t of tokens){
-    const m=t.match(/^([A-Z]+)(\d+)-(\d+)$/);
-    if(m){
-      const pref=m[1], a=parseInt(m[2],10), b=parseInt(m[3],10);
-      const [s,e]=a<=b?[a,b]:[b,a];
-      for(let n=s;n<=e;n++) set.add(pref+n);
-    }else{
-      set.add(t);
-    }
-  }
-  return set;
-}
+const prefixRank=p=>((p||'').toUpperCase() in PREFIX_RANK)?PREFIX_RANK[(p||'').toUpperCase()]:999;
 
 let data=[],filtered=[],toastTimer;const toastEl=el('toast');
 const toast=msg=>{clearTimeout(toastTimer);toastEl.textContent=msg;toastEl.classList.add('show');setTimeout(()=>toastEl.classList.remove('show'),1500)};
@@ -245,45 +210,30 @@ function deriveShuPhase(it){
 }
 const save=()=>localStorage.setItem(STORAGE,JSON.stringify(data));
 const load=()=>{try{const raw=localStorage.getItem(STORAGE);if(raw){const arr=JSON.parse(raw);if(Array.isArray(arr))return arr}}catch(e){}return null};
-function csvEscape(s){if(s==null)s='';s=String(s);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+const csvEscape=s=>{if(s==null)s='';s=String(s);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
 
 // ===== 学習（Flash/MCQ + 再出題 + 並び） =====
 let session={list:[],i:0,mode:'flash',correct:0,wrong:0,showingAnswer:false,started:false,qKey:'code',aKey:'name',requeueWrong:true,order:'random'};
-
 const labelFor=k=>({code:'コード',name:'経穴名',location:'位置',indications:'主治'})[k]||k;
 
 function applyPreset(){const p=PRESETS[el('qaPreset').value]||PRESETS['code->name'];session.qKey=p.qKey;session.aKey=p.aKey}
-
-function getSelectedMeridians(){
-  const sel=el('filterMeridians'); if(!sel) return [];
-  return Array.from(sel.selectedOptions).map(o=>o.value).filter(Boolean);
-}
 
 function applyPresetAndFilterPool(){
   applyPreset();
   session.requeueWrong=el('requeueWrong').checked;
   session.order=el('order').value;
 
-  const selectedMers=new Set(getSelectedMeridians());
+  const mer=el('filterMeridian').value;
   const shu=el('filterShu').value;
   const phase=el('filterPhase').value;
-  const codeSet=parseCodeFilter(el('filterCodes').value);
 
   let pool=data.slice();
+  if(mer)pool=pool.filter(x=>(x.meridian||'')===mer);
+  if(shu)pool=pool.filter(x=>(x.shu||'')===shu);
+  if(phase)pool=pool.filter(x=>(x.phase||'')===phase);
 
-  // 経絡複数選択
-  if(selectedMers.size>0) pool=pool.filter(x=>selectedMers.has(x.meridian||''));
-
-  // コード複数指定
-  if(codeSet.size>0) pool=pool.filter(x=>codeSet.has((x.code||'').toUpperCase()));
-
-  if(shu)   pool=pool.filter(x=>(x.shu||'')===shu);
-  if(phase) pool=pool.filter(x=>(x.phase||'')===phase);
-
-  // 出題キーが双方あるものに限定
   pool=pool.filter(x=>(x[session.qKey]||'').trim()&&(x[session.aKey]||'').trim());
 
-  // 並び（コード順＝CV→GV→十二正経、数値昇順）
   if(session.order==='code'){
     pool.sort((a,b)=>{
       const pa=codeParts(a.code||''), pb=codeParts(b.code||'');
@@ -293,17 +243,15 @@ function applyPresetAndFilterPool(){
       return (pa.raw||'').localeCompare(pb.raw||'');
     });
   }else{
-    // ランダムシャッフル
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
   }
-
   return pool;
 }
 
 function start(){
   session.mode=el('mode').value;
   const limit=Math.max(5,Math.min(200,parseInt(el('limit').value||'20',10)));
-  let pool=applyPresetAndFilterPool();
+  const pool=applyPresetAndFilterPool();
   session.list=pool.slice(0,limit);session.i=0;session.correct=0;session.wrong=0;session.showingAnswer=false;session.started=session.list.length>0;
   if(!session.started){el('qText').textContent='該当データがありません';el('aText').textContent='出題形式・絞り込み・CSVをご確認ください';el('subText').textContent='';el('mcqArea').classList.add('hidden');el('progress').textContent='';return}
   if(session.mode==='mcq') showMCQ(); else showFront();
@@ -331,7 +279,7 @@ function deriveAndFill(d){const a=deriveShuPhase(d);return {...d,shu:d.shu||a.sh
 function normalizeRow(tr){const obj={};tr.querySelectorAll('[data-key]').forEach(td=>obj[td.dataset.key]=td.textContent.trim());const a=deriveShuPhase(obj);if(!obj.shu)obj.shu=a.shu;if(!obj.phase)obj.phase=a.phase;return obj}
 function applyEdit(tr,oldKey){const obj=normalizeRow(tr);const newKey=obj.code||obj.name||'';let idx=indexByKey(oldKey);if(idx===-1)idx=indexByKey(newKey);if(idx===-1){data.push(obj)}else{data[idx]={...data[idx],...obj}}save();tr.querySelector('.chkRow').dataset.key=newKey}
 function renderTable(){const q=(el('txtFind')?.value||'').trim().toLowerCase();filtered=data.filter(d=>{if(!q)return true;const s=`${d.code||''} ${d.name||''} ${d.meridian||''} ${d.reading||''} ${d.location||''} ${d.indications||''} ${d.memo||''} ${d.shu||''} ${d.phase||''}`.toLowerCase();return s.includes(q)});const tb=el('tbody');if(!tb)return;tb.innerHTML='';for(const d of filtered){const tr=document.createElement('tr');tr.innerHTML=`<td><input type="checkbox" class="chkRow" data-key="${d.code||d.name||''}"></td><td contenteditable="true" data-key="code">${d.code||''}</td><td contenteditable="true" data-key="name">${d.name||''}</td><td contenteditable="true" data-key="meridian">${d.meridian||''}</td><td contenteditable="true" data-key="reading">${d.reading||''}</td><td contenteditable="true" data-key="location">${d.location||''}</td><td contenteditable="true" data-key="indications">${d.indications||''}</td><td contenteditable="true" data-key="memo">${d.memo||''}</td><td contenteditable="true" data-key="shu">${d.shu||''}</td><td contenteditable="true" data-key="phase">${d.phase||''}</td><td class="row-actions"><button class="btn" data-act="dup" data-key="${d.code||d.name||''}" type="button">複製</button><button class="btn danger" data-act="del" data-key="${d.code||d.name||''}" type="button">削除</button></td>`;tb.appendChild(tr)}el('info').textContent=`登録：${data.length}件 / 表示：${filtered.length}件`;const all=el('chkAll');if(all)all.checked=false}
-function refresh(){data=data.map(deriveAndFill);const mer=Array.from(new Set(data.map(d=>d.meridian).filter(Boolean))).sort((a,b)=>a.localeCompare(b));const sel=el('filterMeridians');sel.innerHTML='';const allOpt=document.createElement('option');allOpt.value='';allOpt.textContent='（未選択＝全て対象）';sel.appendChild(allOpt);for(const m of mer){const o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o)}renderTable()}
+function refresh(){data=data.map(deriveAndFill);const mer=Array.from(new Set(data.map(d=>d.meridian).filter(Boolean))).sort();el('filterMeridian').innerHTML='<option value=\"\">（すべて）</option>'+mer.map(m=>`<option>${m}</option>`).join('');renderTable()}
 
 // インポート（ファイル）
 async function importFromFile(file){const buf=await file.arrayBuffer();const text=new TextDecoder('utf-8',{fatal:false}).decode(buf);let arr=[];try{if(file.name.endsWith('.json')){const j=JSON.parse(text);arr=j.map(x=>({code:x.id||x.code||x['コード']||'',name:x['経穴名']||x.name||'',meridian:x['経絡']||x.meridian||'',reading:x['読み']||x['経穴名_読み']||x.reading||'',location:x['位置']||x['部位メモ']||x.location||'',indications:x['主治']||x['主治メモ']||x.indications||'',memo:x['その他メモ']||x.memo||'',shu:x['五兪穴']||x.shu||'',phase:x['五行']||x.phase||''}))}else{const rows=text.replace(/，/g,',').replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim().length>0);const headers=rows.shift().split(',').map(s=>s.trim());const ix=k=>headers.indexOf(k);for(const line of rows){const r=line.split(',');let o;if(headers.includes('コード'))o={code:r[ix('コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};else if(headers.includes('id'))o={code:r[ix('id')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('部位メモ')]||'',indications:r[ix('主治メモ')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};else o={code:r[ix('経穴コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡名')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:'',shu:'',phase:''};const a=deriveShuPhase(o);if(!o.shu)o.shu=a.shu;if(!o.phase)o.phase=a.phase;arr.push(o)}}catch(e){alert('インポートに失敗：'+e.message);return}const mp=new Map(data.map(x=>[x.code||x.name,x]));let add=0,upd=0;for(const it of arr){const key=it.code||it.name;if(!key)continue;if(mp.has(key)){mp.set(key,{...mp.get(key),...it});upd++}else{mp.set(key,it);add++}}data=Array.from(mp.values());save();refresh();toast(`インポート：追加 ${add}・更新 ${upd}・全 ${data.length}`)}
@@ -344,26 +292,77 @@ async function importSeed(){try{const saved=load();if(saved&&saved.length){data=
 
 // ===== 初期化 =====
 (async function init(){
-  // タブ
-  el('tabStudy').onclick=()=>show('viewStudy','tabStudy');
-  el('tabManage').onclick=()=>show('viewManage','tabManage');
-  el('tabAbout').onclick=()=>show('viewAbout','tabAbout');
+  // タブ：クリックで確実に切替
+  el('tabStudy').addEventListener('click',()=>show('viewStudy','tabStudy'));
+  el('tabManage').addEventListener('click',()=>show('viewManage','tabManage'));
+  el('tabAbout').addEventListener('click',()=>show('viewAbout','tabAbout'));
 
   // 学習ボタン
   el('btnStart').onclick=start; el('btnFlip').onclick=flip;
   el('btnRight').onclick=()=>markResult(true); el('btnWrong').onclick=()=>markResult(false);
 
   // クリック/キー
-  const flash=el('flash');flash.addEventListener('click',()=>{if(!session.started){start()}else if(session.mode==='flash'){flip()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!session.started){start()}else if(session.mode==='flash'){flip()}}});
+  const flash=el('flash');
+  flash.addEventListener('click',()=>{if(!session.started){start()}else if(session.mode==='flash'){flip()}})
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!session.started){start()}else if(session.mode==='flash'){flip()}}});
 
   // データ管理イベント
   const tb=el('tbody');
-  tb.addEventListener('click',e=>{const btn=e.target.closest('button[data-act]');if(!btn)return;const key=btn.dataset.key;if(btn.dataset.act==='del'){if(confirm('削除しますか？')){const i=data.findIndex(x=>(x.code||x.name)===key);if(i!==-1){data.splice(i,1);save();refresh();toast('削除しました')}}}else if(btn.dataset.act==='dup'){const i=data.findIndex(x=>(x.code||x.name)===key);if(i===-1)return;const src=data[i];let c=(src.code||src.name||'COPY')+'_copy',k=1;while(data.some(x=>(x.code||x.name)===c)){c=(src.code||src.name||'COPY')+'_copy'+(++k)}data.splice(i+1,0,{...src,code:c});save();refresh();toast('複製しました')}});tb.addEventListener('blur',e=>{const td=e.target.closest('td[contenteditable=true]');if(!td)return;const tr=td.closest('tr');const oldKey=tr.querySelector('.chkRow')?.dataset.key||'';applyEdit(tr,oldKey)},true);el('chkAll').addEventListener('change',e=>{document.querySelectorAll('.chkRow').forEach(ch=>ch.checked=e.target.checked)});
-  el('btnAdd').onclick=function(){let base='NEW',n=1;while(data.some(x=>(x.code||x.name)===(base+n)))n++;data.unshift({code:base+n,name:'',meridian:'',reading:'',location:'',indications:'',memo:'',shu:'',phase:''});save();refresh()};
-  el('btnDeleteSel').onclick=function(){const keys=Array.from(document.querySelectorAll('.chkRow:checked')).map(c=>c.dataset.key);if(!keys.length){alert('削除する行にチェックを付けてください');return}if(!confirm(keys.length+' 行を削除しますか？'))return;data=data.filter(x=>!keys.includes(x.code||x.name));save();refresh();toast('削除しました')};
-  el('btnExportCSV').onclick=function(){const headers=['コード','経穴名','経絡','読み','位置','主治','その他メモ','五兪穴','五行'];const lines=[headers.join(',')];for(const d of data){const row=[d.code||'',d.name||'',d.meridian||'',d.reading||'',d.location||'',d.indications||'',d.memo||'',d.shu||'',d.phase||''].map(csvEscape).join(',');lines.push(row)}const BOM='\ufeff';const blob=new Blob([BOM+lines.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='keiketsu_data_v8.csv';a.click();URL.revokeObjectURL(url);toast('CSVを書き出しました')};
-  el('btnExportJSON').onclick=function(){const arr=data.map(d=>({コード:d.code||'',経穴名:d.name||'',経絡:d.meridian||'',読み:d.reading||'',位置:d.location||'',主治:d.indications||'',その他メモ:d.memo||'',五兪穴:d.shu||'',五行:d.phase||''}));const blob=new Blob([JSON.stringify(arr,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='keiketsu_data_v8.json';a.click();URL.revokeObjectURL(url);toast('JSONを書き出しました')};
-  el('btnImport').onclick=async()=>{const fi=el('fileInput');if(!fi.files||!fi.files.length){alert('CSV/JSONを選択してください');return}await importFromFile(fi.files[0]);fi.value=''};
+  tb.addEventListener('click',e=>{
+    const btn=e.target.closest('button[data-act]'); if(!btn) return;
+    const key=btn.dataset.key;
+    if(btn.dataset.act==='del'){
+      if(confirm('削除しますか？')){
+        const i=data.findIndex(x=>(x.code||x.name)===key); if(i!==-1){data.splice(i,1); save(); refresh(); toast('削除しました')}
+      }
+    }else if(btn.dataset.act==='dup'){
+      const i=data.findIndex(x=>(x.code||x.name)===key); if(i===-1) return;
+      const src=data[i]; let c=(src.code||src.name||'COPY')+'_copy',k=1;
+      while(data.some(x=>(x.code||x.name)===c)){ c=(src.code||src.name||'COPY')+'_copy'+(++k) }
+      data.splice(i+1,0,{...src,code:c}); save(); refresh(); toast('複製しました');
+    }
+  });
+  tb.addEventListener('blur',e=>{
+    const td=e.target.closest('td[contenteditable=true]'); if(!td) return;
+    const tr=td.closest('tr'); const oldKey=tr.querySelector('.chkRow')?.dataset.key||''; applyEdit(tr,oldKey);
+  },true);
+  el('chkAll').addEventListener('change',e=>{
+    document.querySelectorAll('.chkRow').forEach(ch=>ch.checked=e.target.checked);
+  });
+  el('btnAdd').onclick=function(){
+    let base='NEW',n=1;while(data.some(x=>(x.code||x.name)===(base+n)))n++;
+    data.unshift({code:base+n,name:'',meridian:'',reading:'',location:'',indications:'',memo:'',shu:'',phase:''});
+    save();refresh();
+  };
+  el('btnDeleteSel').onclick=function(){
+    const keys=Array.from(document.querySelectorAll('.chkRow:checked')).map(c=>c.dataset.key);
+    if(!keys.length){ alert('削除する行にチェックを付けてください'); return; }
+    if(!confirm(keys.length+' 行を削除しますか？')) return;
+    data=data.filter(x=>!keys.includes(x.code||x.name)); save(); refresh(); toast('削除しました');
+  };
+  el('btnExportCSV').onclick=function(){
+    const headers=['コード','経穴名','経絡','読み','位置','主治','その他メモ','五兪穴','五行'];
+    const lines=[headers.join(',')];
+    for(const d of data){
+      const row=[d.code||'',d.name||'',d.meridian||'',d.reading||'',d.location||'',d.indications||'',d.memo||'',d.shu||'',d.phase||''].map(csvEscape).join(',');
+      lines.push(row);
+    }
+    const BOM='\ufeff';
+    const blob=new Blob([BOM+lines.join('\n')],{type:'text/csv'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download='keiketsu_data_v8.csv'; a.click(); URL.revokeObjectURL(url); toast('CSVを書き出しました');
+  };
+  el('btnExportJSON').onclick=function(){
+    const arr=data.map(d=>({コード:d.code||'',経穴名:d.name||'',経絡:d.meridian||'',読み:d.reading||'',位置:d.location||'',主治:d.indications||'',その他メモ:d.memo||'',五兪穴:d.shu||'',五行:d.phase||''}));
+    const blob=new Blob([JSON.stringify(arr,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download='keiketsu_data_v8.json'; a.click(); URL.revokeObjectURL(url); toast('JSONを書き出しました');
+  };
+  el('btnImport').onclick=async()=>{
+    const fi=el('fileInput');
+    if(!fi.files||!fi.files.length){ alert('CSV/JSONを選択してください'); return; }
+    await importFromFile(fi.files[0]); fi.value='';
+  };
   el('txtFind').addEventListener('input',renderTable);
 
   // 一括貼り付け
