@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Keiketsu Mini v8.2（シンプルUI）</title>
+<title>Keiketsu Mini v8.3（堅牢・シンプル）</title>
 <meta name="theme-color" content="#0ea5e9"/>
 <link rel="apple-touch-icon" href="icon-180.png"><link rel="manifest" href="manifest.json">
 <script>if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));}</script>
 <style>
 :root{--bg:#fff;--fg:#111;--muted:#6b7280;--primary:#0ea5e9;--card:#f8fafc;--border:#e5e7eb}
-*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans JP,Hiragino Kaku Gothic ProN,Meiryo,sans-serif;color:var(--fg);background:var(--bg)}
+*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,Arial,"Noto Sans JP","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:var(--fg);background:var(--bg)}
 header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px}
 header h1{font-size:16px;margin:0;font-weight:700}
 nav{margin-left:auto;display:flex;gap:8px}
@@ -47,11 +47,11 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
 </head>
 <body>
   <header>
-    <h1>Keiketsu Mini v8.2（シンプルUI）<span id="badge" class="badge">JS OK</span></h1>
+    <h1>Keiketsu Mini v8.3（堅牢・シンプル）<span class="badge">JS OK</span></h1>
     <nav>
-      <button id="tabStudy" class="active">学習</button>
-      <button id="tabManage">データ管理</button>
-      <button id="tabAbout">説明</button>
+      <button id="tabStudy" class="active" onclick="try{show('viewStudy','tabStudy')}catch(e){alert(e)}">学習</button>
+      <button id="tabManage" onclick="try{show('viewManage','tabManage')}catch(e){alert(e)}">データ管理</button>
+      <button id="tabAbout" onclick="try{show('viewAbout','tabAbout')}catch(e){alert(e)}">説明</button>
     </nav>
   </header>
 
@@ -92,21 +92,21 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
         </label>
         <label>出題数 <input type="number" id="limit" min="5" max="200" value="20" style="width:80px"></label>
         <label><input type="checkbox" id="requeueWrong" checked> 間違えた問題を最後に再出題</label>
-        <button class="btn primary" id="btnStart" type="button">開始</button>
+        <button class="btn primary" id="btnStart" type="button" onclick="try{start()}catch(e){alert(e)}">開始</button>
         <span class="small" id="info"></span>
       </div>
 
       <div class="card">
-        <div class="flash-area" id="flash" tabindex="0" aria-label="flashcard">
+        <div class="flash-area" id="flash" tabindex="0" aria-label="flashcard" onclick="try{flashClick()}catch(e){alert(e)}">
           <div class="q" id="qText">「開始」を押してください</div>
           <div class="a" id="aText"></div>
           <div class="small" id="subText"></div>
           <div class="mcq hidden" id="mcqArea"></div>
         </div>
         <div class="toolbar" style="justify-content:center;gap:12px;">
-          <button class="btn" id="btnFlip" type="button">答えを表示/裏面にする</button>
-          <button class="btn danger" id="btnWrong" type="button">× わからない</button>
-          <button class="btn success" id="btnRight" type="button">○ 正解</button>
+          <button class="btn" id="btnFlip" type="button" onclick="try{flip()}catch(e){alert(e)}">答えを表示/裏面にする</button>
+          <button class="btn danger" id="btnWrong" type="button" onclick="try{markResult(false)}catch(e){alert(e)}">× わからない</button>
+          <button class="btn success" id="btnRight" type="button" onclick="try{markResult(true)}catch(e){alert(e)}">○ 正解</button>
         </div>
         <div class="small" id="progress"></div>
       </div>
@@ -115,18 +115,18 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
     <section id="viewManage" class="hidden">
       <div class="toolbar">
         <input type="file" id="fileInput" accept=".csv,.json">
-        <button class="btn" id="btnImport" type="button">インポート</button>
-        <button class="btn" id="btnAdd" type="button">行を追加</button>
-        <button class="btn warn" id="btnBulkPaste" type="button">一括貼り付け</button>
-        <button class="btn danger" id="btnDeleteSel" type="button">選択行を削除</button>
-        <button class="btn" id="btnExportCSV" type="button">CSVを書き出し</button>
-        <button class="btn" id="btnExportJSON" type="button">JSONを書き出し</button>
-        <input type="text" id="txtFind" placeholder="検索（コード/経穴名/位置/主治/その他/五兪穴/五行）" style="flex:1;min-width:200px">
+        <button class="btn" id="btnImport" type="button" onclick="try{onImportClick()}catch(e){alert(e)}">インポート</button>
+        <button class="btn" id="btnAdd" type="button" onclick="try{onAddClick()}catch(e){alert(e)}">行を追加</button>
+        <button class="btn warn" id="btnBulkPaste" type="button" onclick="try{onBulkPasteOpen()}catch(e){alert(e)}">一括貼り付け</button>
+        <button class="btn danger" id="btnDeleteSel" type="button" onclick="try{onDeleteSelected()}catch(e){alert(e)}">選択行を削除</button>
+        <button class="btn" id="btnExportCSV" type="button" onclick="try{onExportCSV()}catch(e){alert(e)}">CSVを書き出し</button>
+        <button class="btn" id="btnExportJSON" type="button" onclick="try{onExportJSON()}catch(e){alert(e)}">JSONを書き出し</button>
+        <input type="text" id="txtFind" placeholder="検索（コード/経穴名/位置/主治/その他/五兪穴/五行）" style="flex:1;min-width:200px" oninput="try{renderTable()}catch(e){alert(e)}">
       </div>
       <div class="grid" style="margin-top:10px">
         <table>
           <thead><tr>
-            <th style="width:28px"><input type="checkbox" id="chkAll"></th>
+            <th style="width:28px"><input type="checkbox" id="chkAll" onclick="try{onCheckAll(this)}catch(e){alert(e)}"></th>
             <th class="col-code">コード</th><th class="col-name">経穴名</th><th class="col-meridian">経絡</th><th class="col-reading">読み</th>
             <th class="col-location">位置</th><th class="col-indications">主治</th><th class="col-memo">その他メモ</th><th class="col-shu">五兪穴</th><th class="col-phase">五行</th>
             <th style="width:120px">操作</th>
@@ -137,7 +137,7 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
     </section>
 
     <section id="viewAbout" class="hidden">
-      <div class="card"><h3>このアプリについて（v8.2）</h3>
+      <div class="card"><h3>このアプリについて（v8.3）</h3>
         <ul>
           <li>コード順は <b>CV→GV→十二正経（LU→LI→ST→SP→HT→SI→BL→KI→PC→SJ→GB→LV）</b> の数値昇順。</li>
           <li>四択、再出題、一括貼り付け、編集／複製／選択削除／検索 に対応。</li>
@@ -147,232 +147,244 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
     </section>
   </main>
 
-  <!-- 一括貼り付けダイアログ -->
+  <!-- 一括貼り付けダイアログ（dialog未対応ブラウザ対策あり） -->
   <dialog id="dlgPaste">
     <h3>一括貼り付け</h3>
     <p class="small">列順：<code>コード,経穴名,経絡,読み,位置,主治,その他メモ,五兪穴,五行</code>（1行=1件）</p>
     <textarea id="taPaste" rows="10" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:10px"></textarea>
     <div style="margin-top:10px;text-align:right">
-      <button class="btn" id="btnPasteCancel" type="button">キャンセル</button>
-      <button class="btn primary" id="btnPasteApply" type="button">取り込む</button>
+      <button class="btn" onclick="try{onPasteCancel()}catch(e){alert(e)}">キャンセル</button>
+      <button class="btn primary" onclick="try{onPasteApply()}catch(e){alert(e)}">取り込む</button>
     </div>
   </dialog>
 
   <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
-// ===== 安全ガード =====
-window.onerror=(m)=>alert('JS Error: '+m);
+// ===== 最低限のエラーハンドラ =====
+window.onerror=(m,src,ln,col,err)=>{alert('JS Error: '+m);console.error(err)};
 
-// ===== タブ切替（データ管理/説明が効かない対策） =====
+// ===== dialog 簡易ポリフィル =====
+(function(){
+  var d=document.createElement('dialog');
+  if(!('showModal'in d)){
+    HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');document.body.style.overflow='hidden'};
+    HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');document.body.style.overflow=''}
+  }
+})();
+
+// ===== タブ切替（inlineから呼ばれる） =====
 function show(viewId,tabId){
-  ['viewStudy','viewManage','viewAbout'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-  document.getElementById(viewId).classList.remove('hidden');
-  ['tabStudy','tabManage','tabAbout'].forEach(id=>document.getElementById(id).classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
+  ['viewStudy','viewManage','viewAbout'].forEach(function(id){var el=document.getElementById(id); if(el) el.classList.add('hidden')});
+  var v=document.getElementById(viewId); if(v) v.classList.remove('hidden');
+  ['tabStudy','tabManage','tabAbout'].forEach(function(id){var b=document.getElementById(id); if(b) b.classList.remove('active')});
+  var t=document.getElementById(tabId); if(t) t.classList.add('active');
 }
 
 // ===== ユーティリティ/定数 =====
-const el=id=>document.getElementById(id);
-const STORAGE='keiketsu-mini-v8';
-const YIN=new Set(['手の太陰肺経','手の厥陰心包経','手の少陰心経','足の太陰脾経','足の少陰腎経','足の厥陰肝経']);
-const PHASE_SEQ_YIN=['木','火','土','金','水'];const PHASE_SEQ_YANG=['金','水','木','火','土'];
-const SHU_POINTS={'手の太陰肺経':{'井':'LU11','滎':'LU10','兪':'LU9','経':'LU8','合':'LU5'},'手の陽明大腸経':{'井':'LI1','滎':'LI2','兪':'LI3','経':'LI5','合':'LI11'},'足の陽明胃経':{'井':'ST45','滎':'ST44','兪':'ST43','経':'ST41','合':'ST36'},'足の太陰脾経':{'井':'SP1','滎':'SP2','兪':'SP3','経':'SP5','合':'SP9'},'手の少陰心経':{'井':'HT9','滎':'HT8','兪':'HT7','経':'HT4','合':'HT3'},'手の太陽小腸経':{'井':'SI1','滎':'SI2','兪':'SI3','経':'SI5','合':'SI8'},'足の太陽膀胱経':{'井':'BL67','滎':'BL66','兪':'BL65','経':'BL60','合':'BL40'},'足の少陰腎経':{'井':'KI1','滎':'KI2','兪':'KI3','経':'KI7','合':'KI10'},'手の厥陰心包経':{'井':'PC9','滎':'PC8','兪':'PC7','経':'PC5','合':'PC3'},'手の少陽三焦経':{'井':'SJ1','滎':'SJ2','兪':'SJ3','経':'SJ6','合':'SJ10'},'足の少陽胆経':{'井':'GB44','滎':'GB43','兪':'GB41','経':'GB38','合':'GB34'},'足の厥陰肝経':{'井':'LV1','滎':'LV2','兪':'LV3','経':'LV4','合':'LV8'}};
-const PRESETS={'code->name':{qKey:'code',aKey:'name'},'name->location':{qKey:'name',aKey:'location'},'name->indications':{qKey:'name',aKey:'indications'},'code->location':{qKey:'code',aKey:'location'},'location->name':{qKey:'location',aKey:'name'}};
+function el(id){return document.getElementById(id)}
+var STORAGE='keiketsu-mini-v8';
+var YIN=new Set(['手の太陰肺経','手の厥陰心包経','手の少陰心経','足の太陰脾経','足の少陰腎経','足の厥陰肝経']);
+var PHASE_SEQ_YIN=['木','火','土','金','水'], PHASE_SEQ_YANG=['金','水','木','火','土'];
+var SHU_POINTS={'手の太陰肺経':{'井':'LU11','滎':'LU10','兪':'LU9','経':'LU8','合':'LU5'},'手の陽明大腸経':{'井':'LI1','滎':'LI2','兪':'LI3','経':'LI5','合':'LI11'},'足の陽明胃経':{'井':'ST45','滎':'ST44','兪':'ST43','経':'ST41','合':'ST36'},'足の太陰脾経':{'井':'SP1','滎':'SP2','兪':'SP3','経':'SP5','合':'SP9'},'手の少陰心経':{'井':'HT9','滎':'HT8','兪':'HT7','経':'HT4','合':'HT3'},'手の太陽小腸経':{'井':'SI1','滎':'SI2','兪':'SI3','経':'SI5','合':'SI8'},'足の太陽膀胱経':{'井':'BL67','滎':'BL66','兪':'BL65','経':'BL60','合':'BL40'},'足の少陰腎経':{'井':'KI1','滎':'KI2','兪':'KI3','経':'KI7','合':'KI10'},'手の厥陰心包経':{'井':'PC9','滎':'PC8','兪':'PC7','経':'PC5','合':'PC3'},'手の少陽三焦経':{'井':'SJ1','滎':'SJ2','兪':'SJ3','経':'SJ6','合':'SJ10'},'足の少陽胆経':{'井':'GB44','滎':'GB43','兪':'GB41','経':'GB38','合':'GB34'},'足の厥陰肝経':{'井':'LV1','滎':'LV2','兪':'LV3','経':'LV4','合':'LV8'}};
+var PRESETS={'code->name':{qKey:'code',aKey:'name'},'name->location':{qKey:'name',aKey:'location'},'name->indications':{qKey:'name',aKey:'indications'},'code->location':{qKey:'code',aKey:'location'},'location->name':{qKey:'location',aKey:'name'}};
 
 // コードを英字+数値に分解
 function codeParts(code){
-  const s=(code||'').toUpperCase().trim();
-  const m=s.match(/^([A-Z]+)(\d+)$/); if(m) return {prefix:m[1],num:parseInt(m[2],10),raw:s};
-  const m2=s.match(/^([A-Z]+)(\d+)/); if(m2) return {prefix:m2[1],num:parseInt(m2[2],10),raw:s};
+  var s=(code||'').toUpperCase().trim();
+  var m=s.match(/^([A-Z]+)(\d+)$/); if(m) return {prefix:m[1],num:parseInt(m[2],10),raw:s};
+  var m2=s.match(/^([A-Z]+)(\d+)/); if(m2) return {prefix:m2[1],num:parseInt(m2[2],10),raw:s};
   return {prefix:s,num:Number.MAX_SAFE_INTEGER,raw:s};
 }
 // 並び優先：CV→GV→LU→LI→ST→SP→HT→SI→BL→KI→PC→SJ→GB→LV
-const PREFIX_ORDER=['CV','GV','LU','LI','ST','SP','HT','SI','BL','KI','PC','SJ','GB','LV'];
-const PREFIX_RANK=Object.fromEntries(PREFIX_ORDER.map((p,i)=>[p,i]));
-const prefixRank=p=>((p||'').toUpperCase() in PREFIX_RANK)?PREFIX_RANK[(p||'').toUpperCase()]:999;
+var PREFIX_ORDER=['CV','GV','LU','LI','ST','SP','HT','SI','BL','KI','PC','SJ','GB','LV'];
+var PREFIX_RANK=(function(){var o={};for(var i=0;i<PREFIX_ORDER.length;i++)o[PREFIX_ORDER[i]]=i;return o})()
+function prefixRank(p){p=(p||'').toUpperCase();return (p in PREFIX_RANK)?PREFIX_RANK[p]:999}
 
-let data=[],filtered=[],toastTimer;const toastEl=el('toast');
-const toast=msg=>{clearTimeout(toastTimer);toastEl.textContent=msg;toastEl.classList.add('show');setTimeout(()=>toastEl.classList.remove('show'),1500)};
+var data=[],filtered=[],toastTimer;var toastEl=el('toast');
+function toast(msg){clearTimeout(toastTimer);toastEl.textContent=msg;toastEl.classList.add('show');toastTimer=setTimeout(function(){toastEl.classList.remove('show')},1500)}
 
 function deriveShuPhase(it){
-  const mer=it.meridian||'';const code=(it.code||'').toUpperCase();
-  for(const[merName,map]of Object.entries(SHU_POINTS)){
+  var mer=it.meridian||'';var code=(it.code||'').toUpperCase();
+  for(var merName in SHU_POINTS){
     if(mer!==merName)continue;
-    for(const[shu,pcode]of Object.entries(map)){
+    var map=SHU_POINTS[merName];
+    for(var shu in map){
+      var pcode=map[shu];
       if(code===pcode){
-        const phase=(YIN.has(merName)?PHASE_SEQ_YIN:PHASE_SEQ_YANG)[['井','滎','兪','経','合'].indexOf(shu)];
-        return{shu,phase}
+        var phase=(YIN.has(merName)?PHASE_SEQ_YIN:PHASE_SEQ_YANG)[['井','滎','兪','経','合'].indexOf(shu)];
+        return{shu:shu,phase:phase}
       }
     }
   }
   return{shu:it.shu||'',phase:it.phase||''}
 }
-const save=()=>localStorage.setItem(STORAGE,JSON.stringify(data));
-const load=()=>{try{const raw=localStorage.getItem(STORAGE);if(raw){const arr=JSON.parse(raw);if(Array.isArray(arr))return arr}}catch(e){}return null};
-const csvEscape=s=>{if(s==null)s='';s=String(s);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+function save(){localStorage.setItem(STORAGE,JSON.stringify(data))}
+function load(){try{var raw=localStorage.getItem(STORAGE);if(raw){var arr=JSON.parse(raw);if(Array.isArray(arr))return arr}}catch(e){}return null}
+function csvEscape(s){if(s==null)s='';s=String(s);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
 
 // ===== 学習（Flash/MCQ + 再出題 + 並び） =====
-let session={list:[],i:0,mode:'flash',correct:0,wrong:0,showingAnswer:false,started:false,qKey:'code',aKey:'name',requeueWrong:true,order:'random'};
-const labelFor=k=>({code:'コード',name:'経穴名',location:'位置',indications:'主治'})[k]||k;
-
-function applyPreset(){const p=PRESETS[el('qaPreset').value]||PRESETS['code->name'];session.qKey=p.qKey;session.aKey=p.aKey}
+var session={list:[],i:0,mode:'flash',correct:0,wrong:0,showingAnswer:false,started:false,qKey:'code',aKey:'name',requeueWrong:true,order:'random'};
+function labelFor(k){return({code:'コード',name:'経穴名',location:'位置',indications:'主治'})[k]||k}
+function applyPreset(){var p=PRESETS[el('qaPreset').value]||PRESETS['code->name'];session.qKey=p.qKey;session.aKey=p.aKey}
 
 function applyPresetAndFilterPool(){
   applyPreset();
   session.requeueWrong=el('requeueWrong').checked;
   session.order=el('order').value;
 
-  const mer=el('filterMeridian').value;
-  const shu=el('filterShu').value;
-  const phase=el('filterPhase').value;
+  var mer=el('filterMeridian').value;
+  var shu=el('filterShu').value;
+  var phase=el('filterPhase').value;
 
-  let pool=data.slice();
-  if(mer)pool=pool.filter(x=>(x.meridian||'')===mer);
-  if(shu)pool=pool.filter(x=>(x.shu||'')===shu);
-  if(phase)pool=pool.filter(x=>(x.phase||'')===phase);
+  var pool=data.slice();
+  if(mer)pool=pool.filter(function(x){return (x.meridian||'')===mer});
+  if(shu)pool=pool.filter(function(x){return (x.shu||'')===shu});
+  if(phase)pool=pool.filter(function(x){return (x.phase||'')===phase});
 
-  pool=pool.filter(x=>(x[session.qKey]||'').trim()&&(x[session.aKey]||'').trim());
+  pool=pool.filter(function(x){return (x[session.qKey]||'').trim()&&(x[session.aKey]||'').trim()});
 
   if(session.order==='code'){
-    pool.sort((a,b)=>{
-      const pa=codeParts(a.code||''), pb=codeParts(b.code||'');
-      const ra=prefixRank(pa.prefix), rb=prefixRank(pb.prefix);
+    pool.sort(function(a,b){
+      var pa=codeParts(a.code||''), pb=codeParts(b.code||'');
+      var ra=prefixRank(pa.prefix), rb=prefixRank(pb.prefix);
       if(ra!==rb) return ra-rb;
       if(pa.num!==pb.num) return pa.num-pb.num;
       return (pa.raw||'').localeCompare(pb.raw||'');
     });
   }else{
-    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+    for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=pool[i];pool[i]=pool[j];pool[j]=tmp}
   }
   return pool;
 }
 
 function start(){
   session.mode=el('mode').value;
-  const limit=Math.max(5,Math.min(200,parseInt(el('limit').value||'20',10)));
-  const pool=applyPresetAndFilterPool();
+  var limit=Math.max(5,Math.min(200,parseInt(el('limit').value||'20',10)));
+  var pool=applyPresetAndFilterPool();
   session.list=pool.slice(0,limit);session.i=0;session.correct=0;session.wrong=0;session.showingAnswer=false;session.started=session.list.length>0;
   if(!session.started){el('qText').textContent='該当データがありません';el('aText').textContent='出題形式・絞り込み・CSVをご確認ください';el('subText').textContent='';el('mcqArea').classList.add('hidden');el('progress').textContent='';return}
   if(session.mode==='mcq') showMCQ(); else showFront();
   updateProgress()
 }
 function current(){return session.list[session.i]}
-function showFront(){const it=current();el('qText').textContent=labelFor(session.qKey)+'：'+(it[session.qKey]||'—');el('aText').innerHTML='';el('subText').textContent='クリック／Enter／Space で裏面表示';el('mcqArea').classList.add('hidden');session.showingAnswer=false}
-function showBack(){const it=current();el('qText').textContent=labelFor(session.aKey)+'：'+(it[session.aKey]||'—');const sp=(it.shu&&it.phase)?`<span class="pill alt">五兪：${it.shu}</span><span class="pill alt">五行：${it.phase}</span>`:'';el('aText').innerHTML=`<span class="pill">${it.code||''}</span><span class="pill">${it.meridian||''}</span>${sp}<div><b>経穴名：</b>${it.name||'—'}</div><div><b>位置：</b>${it.location||'—'}</div><div><b>主治：</b>${it.indications||'—'}</div><div><b>その他：</b>${it.memo||'—'}</div>`;el('subText').textContent='もう一度で表へ';el('mcqArea').classList.add('hidden');session.showingAnswer=true}
+function showFront(){var it=current();el('qText').textContent=labelFor(session.qKey)+'：'+(it[session.qKey]||'—');el('aText').innerHTML='';el('subText').textContent='クリック／Enter／Space で裏面表示';el('mcqArea').classList.add('hidden');session.showingAnswer=false}
+function showBack(){var it=current();el('qText').textContent=labelFor(session.aKey)+'：'+(it[session.aKey]||'—');var sp=(it.shu&&it.phase)?'<span class="pill alt">五兪：'+it.shu+'</span><span class="pill alt">五行：'+it.phase+'</span>':'';el('aText').innerHTML='<span class="pill">'+(it.code||'')+'</span><span class="pill">'+(it.meridian||'')+'</span>'+sp+'<div><b>経穴名：</b>'+(it.name||'—')+'</div><div><b>位置：</b>'+(it.location||'—')+'</div><div><b>主治：</b>'+(it.indications||'—')+'</div><div><b>その他：</b>'+(it.memo||'—')+'</div>';el('subText').textContent='もう一度で表へ';el('mcqArea').classList.add('hidden');session.showingAnswer=true}
 function flip(){if(!session.started||!session.list.length){alert('まず「開始」を押してください');return}if(session.mode==='mcq'){return}if(session.showingAnswer)showFront();else showBack()}
-function updateProgress(){el('progress').textContent=`進捗：${session.i+1}/${session.list.length}（正 ${session.correct}・誤 ${session.wrong}）`}
+function updateProgress(){el('progress').textContent='進捗：'+(session.i+1)+'/'+session.list.length+'（正 '+session.correct+'・誤 '+session.wrong+'）'}
 function handleWrongRequeue(it){if(!session.requeueWrong) return;session.list.push(it)}
-function next(){session.i++;if(session.i>=session.list.length){el('qText').textContent='セッション完了！';el('aText').textContent=`正解 ${session.correct} / 不正解 ${session.wrong}`;el('subText').textContent='';el('mcqArea').classList.add('hidden');el('progress').textContent='';session.started=false;return}if(session.mode==='mcq')showMCQ();else showFront();updateProgress()}
-function markResult(ok){if(!session.started||!session.list.length){alert('まず「開始」を押してください');return}const it=current();if(ok){session.correct++;toast('正解')}else{session.wrong++;handleWrongRequeue(it);toast('不正解')}next()}
-// クリック/Enter/Spaceでフリップ or 開始
-(function enableFlipShortcuts(){const flash=el('flash');flash.addEventListener('click',()=>{if(!session.started){start()}else if(session.mode==='flash'){flip()}});document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!session.started){start()}else if(session.mode==='flash'){flip()}}});})();
+function next(){session.i++;if(session.i>=session.list.length){el('qText').textContent='セッション完了！';el('aText').textContent='正解 '+session.correct+' / 不正解 '+session.wrong;el('subText').textContent='';el('mcqArea').classList.add('hidden');el('progress').textContent='';session.started=false;return}if(session.mode==='mcq')showMCQ();else showFront();updateProgress()}
+function markResult(ok){if(!session.started||!session.list.length){alert('まず「開始」を押してください');return}var it=current();if(ok){session.correct++;toast('正解')}else{session.wrong++;handleWrongRequeue(it);toast('不正解')}next()}
+function flashClick(){if(!session.started){start()}else if(session.mode==='flash'){flip()}}
+// キーボード
+document.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();flashClick()}});
 
 // ===== 四択（MCQ） =====
-function showMCQ(){const it=current();el('qText').textContent=labelFor(session.qKey)+'：'+(it[session.qKey]||'—');el('aText').textContent='';el('subText').textContent='';const opts=pickOptions(it,session.aKey);const area=el('mcqArea');area.innerHTML='';area.classList.remove('hidden');opts.forEach(o=>{const btn=document.createElement('button');btn.className='btn';btn.type='button';btn.textContent=o[session.aKey]||'（未設定）';btn.onclick=()=>{if(btn.dataset.done){next();return}if(o===it){btn.classList.add('correct');session.correct++;toast('正解')}else{btn.classList.add('wrong');session.wrong++;handleWrongRequeue(it);toast('不正解')}btn.dataset.done='1';setTimeout(next,320)};area.appendChild(btn)})}
-function pickOptions(target,aKey){const pool=data.filter(x=>(x[aKey]||'').trim());const uniq=[];const seen=new Set();for(const x of pool){const v=x[aKey];if(!seen.has(v)){uniq.push(x);seen.add(v)}}const opts=[target];while(opts.length<4&&uniq.length){const idx=Math.floor(Math.random()*uniq.length);const cand=uniq.splice(idx,1)[0];if(cand[aKey]!==target[aKey])opts.push(cand)}while(opts.length<4)opts.push(target);for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}return opts}
+function showMCQ(){var it=current();el('qText').textContent=labelFor(session.qKey)+'：'+(it[session.qKey]||'—');el('aText').textContent='';el('subText').textContent='';var opts=pickOptions(it,session.aKey);var area=el('mcqArea');area.innerHTML='';area.classList.remove('hidden');opts.forEach(function(o){var btn=document.createElement('button');btn.className='btn';btn.type='button';btn.textContent=o[session.aKey]||'（未設定）';btn.onclick=function(){if(btn.dataset.done){next();return}if(o===it){btn.classList.add('correct');session.correct++;toast('正解')}else{btn.classList.add('wrong');session.wrong++;handleWrongRequeue(it);toast('不正解')}btn.dataset.done='1';setTimeout(next,320)};area.appendChild(btn)})}
+function pickOptions(target,aKey){var pool=data.filter(function(x){return (x[aKey]||'').trim()});var uniq=[],seen=new Set();for(var i=0;i<pool.length;i++){var x=pool[i],v=x[aKey];if(!seen.has(v)){uniq.push(x);seen.add(v)}}var opts=[target];while(opts.length<4&&uniq.length){var idx=Math.floor(Math.random()*uniq.length);var cand=uniq.splice(idx,1)[0];if(cand[aKey]!==target[aKey])opts.push(cand)}while(opts.length<4)opts.push(target);for(var j=opts.length-1;j>0;j--){var k=Math.floor(Math.random()*(j+1)),t=opts[j];opts[j]=opts[k];opts[k]=t}return opts}
 
-// ===== データ管理 =====
+// ===== データ管理（inline用の公開関数） =====
 function keyOf(d){return d.code||d.name||''}
-function indexByKey(k){return data.findIndex(x=>keyOf(x)===k)}
-function deriveAndFill(d){const a=deriveShuPhase(d);return {...d,shu:d.shu||a.shu,phase:d.phase||a.phase}}
-function normalizeRow(tr){const obj={};tr.querySelectorAll('[data-key]').forEach(td=>obj[td.dataset.key]=td.textContent.trim());const a=deriveShuPhase(obj);if(!obj.shu)obj.shu=a.shu;if(!obj.phase)obj.phase=a.phase;return obj}
-function applyEdit(tr,oldKey){const obj=normalizeRow(tr);const newKey=obj.code||obj.name||'';let idx=indexByKey(oldKey);if(idx===-1)idx=indexByKey(newKey);if(idx===-1){data.push(obj)}else{data[idx]={...data[idx],...obj}}save();tr.querySelector('.chkRow').dataset.key=newKey}
-function renderTable(){const q=(el('txtFind')?.value||'').trim().toLowerCase();filtered=data.filter(d=>{if(!q)return true;const s=`${d.code||''} ${d.name||''} ${d.meridian||''} ${d.reading||''} ${d.location||''} ${d.indications||''} ${d.memo||''} ${d.shu||''} ${d.phase||''}`.toLowerCase();return s.includes(q)});const tb=el('tbody');if(!tb)return;tb.innerHTML='';for(const d of filtered){const tr=document.createElement('tr');tr.innerHTML=`<td><input type="checkbox" class="chkRow" data-key="${d.code||d.name||''}"></td><td contenteditable="true" data-key="code">${d.code||''}</td><td contenteditable="true" data-key="name">${d.name||''}</td><td contenteditable="true" data-key="meridian">${d.meridian||''}</td><td contenteditable="true" data-key="reading">${d.reading||''}</td><td contenteditable="true" data-key="location">${d.location||''}</td><td contenteditable="true" data-key="indications">${d.indications||''}</td><td contenteditable="true" data-key="memo">${d.memo||''}</td><td contenteditable="true" data-key="shu">${d.shu||''}</td><td contenteditable="true" data-key="phase">${d.phase||''}</td><td class="row-actions"><button class="btn" data-act="dup" data-key="${d.code||d.name||''}" type="button">複製</button><button class="btn danger" data-act="del" data-key="${d.code||d.name||''}" type="button">削除</button></td>`;tb.appendChild(tr)}el('info').textContent=`登録：${data.length}件 / 表示：${filtered.length}件`;const all=el('chkAll');if(all)all.checked=false}
-function refresh(){data=data.map(deriveAndFill);const mer=Array.from(new Set(data.map(d=>d.meridian).filter(Boolean))).sort();el('filterMeridian').innerHTML='<option value=\"\">（すべて）</option>'+mer.map(m=>`<option>${m}</option>`).join('');renderTable()}
+function indexByKey(k){for(var i=0;i<data.length;i++){if(keyOf(data[i])===k)return i}return -1}
+function deriveAndFill(d){var a=deriveShuPhase(d);if(!d.shu)d.shu=a.shu;if(!d.phase)d.phase=a.phase;return d}
+function normalizeRow(tr){var obj={};var tds=tr.querySelectorAll('[data-key]');for(var i=0;i<tds.length;i++){var td=tds[i];obj[td.getAttribute('data-key')]=td.textContent.trim()}var a=deriveShuPhase(obj);if(!obj.shu)obj.shu=a.shu;if(!obj.phase)obj.phase=a.phase;return obj}
+function applyEdit(tr,oldKey){var obj=normalizeRow(tr);var newKey=obj.code||obj.name||'';var idx=indexByKey(oldKey);if(idx===-1)idx=indexByKey(newKey);if(idx===-1){data.push(obj)}else{data[idx]=Object.assign({},data[idx],obj)}save();var chk=tr.querySelector('.chkRow');if(chk) chk.dataset.key=newKey}
+function renderTable(){var q=(el('txtFind')?el('txtFind').value:'').trim().toLowerCase();filtered=data.filter(function(d){if(!q)return true;var s=[d.code||'',d.name||'',d.meridian||'',d.reading||'',d.location||'',d.indications||'',d.memo||'',d.shu||'',d.phase||''].join(' ').toLowerCase();return s.indexOf(q)!==-1});var tb=el('tbody');if(!tb)return;tb.innerHTML='';for(var i=0;i<filtered.length;i++){var d=filtered[i];var key=d.code||d.name||'';var tr=document.createElement('tr');tr.innerHTML='<td><input type="checkbox" class="chkRow" data-key="'+key+'"></td>'
+  +'<td contenteditable="true" data-key="code">'+(d.code||'')+'</td>'
+  +'<td contenteditable="true" data-key="name">'+(d.name||'')+'</td>'
+  +'<td contenteditable="true" data-key="meridian">'+(d.meridian||'')+'</td>'
+  +'<td contenteditable="true" data-key="reading">'+(d.reading||'')+'</td>'
+  +'<td contenteditable="true" data-key="location">'+(d.location||'')+'</td>'
+  +'<td contenteditable="true" data-key="indications">'+(d.indications||'')+'</td>'
+  +'<td contenteditable="true" data-key="memo">'+(d.memo||'')+'</td>'
+  +'<td contenteditable="true" data-key="shu">'+(d.shu||'')+'</td>'
+  +'<td contenteditable="true" data-key="phase">'+(d.phase||'')+'</td>'
+  +'<td class="row-actions"><button class="btn" type="button" onclick="try{rowDup(\''+key.replace(/'/g,"\\'")+'\')}catch(e){alert(e)}">複製</button> <button class="btn danger" type="button" onclick="try{rowDel(\''+key.replace(/'/g,"\\'")+'\')}catch(e){alert(e)}">削除</button></td>';
+  tr.addEventListener('blur',function(ev){var td=ev.target.closest('td[contenteditable=true]');if(!td)return;var tr=td.closest('tr');var chk=tr.querySelector('.chkRow');var oldKey=chk?chk.dataset.key:'';applyEdit(tr,oldKey)},true);
+  tb.appendChild(tr)}
+  var all=el('chkAll');if(all)all.checked=false;
+  el('info').textContent='登録：'+data.length+'件 / 表示：'+filtered.length+'件';
+}
+function rowDel(key){if(!confirm('削除しますか？'))return;var i=indexByKey(key);if(i!==-1){data.splice(i,1);save();refresh();toast('削除しました')}}
+function rowDup(key){var i=indexByKey(key);if(i===-1)return;var src=data[i];var c=(src.code||src.name||'COPY')+'_copy',k=1;while(indexByKey(c)!==-1){c=(src.code||src.name||'COPY')+'_copy'+(++k)}data.splice(i+1,0,Object.assign({},src,{code:c}));save();refresh();toast('複製しました')}
+function onCheckAll(box){var ch=document.querySelectorAll('.chkRow');for(var i=0;i<ch.length;i++){ch[i].checked=box.checked}}
+function onAddClick(){var base='NEW',n=1;while(indexByKey(base+n)!==-1)n++;data.unshift({code:base+n,name:'',meridian:'',reading:'',location:'',indications:'',memo:'',shu:'',phase:''});save();refresh()}
+function onDeleteSelected(){var keys=[];var ch=document.querySelectorAll('.chkRow:checked');for(var i=0;i<ch.length;i++)keys.push(ch[i].dataset.key);if(!keys.length){alert('削除する行にチェックを付けてください');return}if(!confirm(keys.length+' 行を削除しますか？'))return;data=data.filter(function(x){return keys.indexOf(x.code||x.name)===-1});save();refresh();toast('削除しました')}
+function onExportCSV(){var headers=['コード','経穴名','経絡','読み','位置','主治','その他メモ','五兪穴','五行'];var lines=[headers.join(',')];for(var i=0;i<data.length;i++){var d=data[i];var row=[d.code||'',d.name||'',d.meridian||'',d.reading||'',d.location||'',d.indications||'',d.memo||'',d.shu||'',d.phase||''].map(csvEscape).join(',');lines.push(row)}var blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='keiketsu_data_v8.csv';a.click();URL.revokeObjectURL(url);toast('CSVを書き出しました')}
+function onExportJSON(){var arr=data.map(function(d){return{コード:d.code||'',経穴名:d.name||'',経絡:d.meridian||'',読み:d.reading||'',位置:d.location||'',主治:d.indications||'',その他メモ:d.memo||'',五兪穴:d.shu||'',五行:d.phase||''}});var blob=new Blob([JSON.stringify(arr,null,2)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='keiketsu_data_v8.json';a.click();URL.revokeObjectURL(url);toast('JSONを書き出しました')}
+async function onImportClick(){var fi=el('fileInput');if(!fi.files||!fi.files.length){alert('CSV/JSONを選択してください');return}await importFromFile(fi.files[0]);fi.value=''}
+function onBulkPasteOpen(){var d=el('dlgPaste');if(d.showModal)d.showModal();else d.setAttribute('open','')}
+function onPasteCancel(){var d=el('dlgPaste');if(d.close)d.close();else d.removeAttribute('open')}
+function onPasteApply(){var txt=el('taPaste').value||'';var n=importFromText(txt);onPasteCancel();toast('取り込み '+n+' 件')}
 
-// インポート（ファイル）
-async function importFromFile(file){const buf=await file.arrayBuffer();const text=new TextDecoder('utf-8',{fatal:false}).decode(buf);let arr=[];try{if(file.name.endsWith('.json')){const j=JSON.parse(text);arr=j.map(x=>({code:x.id||x.code||x['コード']||'',name:x['経穴名']||x.name||'',meridian:x['経絡']||x.meridian||'',reading:x['読み']||x['経穴名_読み']||x.reading||'',location:x['位置']||x['部位メモ']||x.location||'',indications:x['主治']||x['主治メモ']||x.indications||'',memo:x['その他メモ']||x.memo||'',shu:x['五兪穴']||x.shu||'',phase:x['五行']||x.phase||''}))}else{const rows=text.replace(/，/g,',').replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim().length>0);const headers=rows.shift().split(',').map(s=>s.trim());const ix=k=>headers.indexOf(k);for(const line of rows){const r=line.split(',');let o;if(headers.includes('コード'))o={code:r[ix('コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};else if(headers.includes('id'))o={code:r[ix('id')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('部位メモ')]||'',indications:r[ix('主治メモ')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};else o={code:r[ix('経穴コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡名')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:'',shu:'',phase:''};const a=deriveShuPhase(o);if(!o.shu)o.shu=a.shu;if(!o.phase)o.phase=a.phase;arr.push(o)}}catch(e){alert('インポートに失敗：'+e.message);return}const mp=new Map(data.map(x=>[x.code||x.name,x]));let add=0,upd=0;for(const it of arr){const key=it.code||it.name;if(!key)continue;if(mp.has(key)){mp.set(key,{...mp.get(key),...it});upd++}else{mp.set(key,it);add++}}data=Array.from(mp.values());save();refresh();toast(`インポート：追加 ${add}・更新 ${upd}・全 ${data.length}`)}
+// ===== インポート処理 =====
+async function importFromFile(file){
+  var buf=await file.arrayBuffer();var text=new TextDecoder('utf-8',{fatal:false}).decode(buf);var arr=[];
+  try{
+    if(file.name.endsWith('.json')){
+      var j=JSON.parse(text);
+      arr=j.map(function(x){return{code:x.id||x.code||x['コード']||'',name:x['経穴名']||x.name||'',meridian:x['経絡']||x.meridian||'',reading:x['読み']||x['経穴名_読み']||x.reading||'',location:x['位置']||x['部位メモ']||x.location||'',indications:x['主治']||x['主治メモ']||x.indications||'',memo:x['その他メモ']||x.memo||'',shu:x['五兪穴']||x.shu||'',phase:x['五行']||x.phase||''}})
+    }else{
+      var rows=text.replace(/，/g,',').replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(function(l){return l.trim().length>0});
+      var headers=rows.shift().split(',').map(function(s){return s.trim()}); var ix=function(k){return headers.indexOf(k)};
+      for(var i=0;i<rows.length;i++){
+        var line=rows[i], r=line.split(','), o;
+        if(headers.indexOf('コード')!==-1) o={code:r[ix('コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};
+        else if(headers.indexOf('id')!==-1) o={code:r[ix('id')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('部位メモ')]||'',indications:r[ix('主治メモ')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};
+        else o={code:r[ix('経穴コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡名')]||'',reading:r[ix('経穴名_読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:'',shu:'',phase:''};
+        var a=deriveShuPhase(o); if(!o.shu)o.shu=a.shu; if(!o.phase)o.phase=a.phase; arr.push(o);
+      }
+    }
+  }catch(e){ alert('インポートに失敗：'+e.message); return }
+  var mp=new Map(data.map(function(x){return [x.code||x.name,x]})); var add=0,upd=0;
+  for(var i=0;i<arr.length;i++){var it=arr[i];var key=it.code||it.name;if(!key)continue;if(mp.has(key)){mp.set(key,Object.assign({},mp.get(key),it));upd++}else{mp.set(key,it);add++}}
+  data=Array.from(mp.values()); save(); refresh(); toast('インポート：追加 '+add+'・更新 '+upd+'・全 '+data.length);
+}
 
-// インポート（一括貼り付け）
-function importFromText(text){const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim().length>0);if(!lines.length)return 0;const headers=lines[0].includes(',')?lines.shift().split(',').map(s=>s.trim()):['コード','経穴名','経絡','読み','位置','主治','その他メモ','五兪穴','五行'];const ix=k=>headers.indexOf(k);let count=0;const mp=new Map(data.map(x=>[x.code||x.name,x]));for(const line of lines){const r=line.split(',');const o={code:r[ix('コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};const a=deriveShuPhase(o);if(!o.shu)o.shu=a.shu;if(!o.phase)o.phase=a.phase;const key=o.code||o.name;if(!key)continue;mp.set(key,{...(mp.get(key)||{}),...o});count++}data=Array.from(mp.values());save();refresh();return count}
+// 一括貼り付け
+function importFromText(text){
+  var lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(function(l){return l.trim().length>0});
+  if(!lines.length) return 0;
+  var headers=lines[0].indexOf(',')>=0?lines.shift().split(',').map(function(s){return s.trim()}):['コード','経穴名','経絡','読み','位置','主治','その他メモ','五兪穴','五行'];
+  var ix=function(k){return headers.indexOf(k)}; var count=0; var mp=new Map(data.map(function(x){return [x.code||x.name,x]}));
+  for(var i=0;i<lines.length;i++){
+    var r=lines[i].split(','), o={code:r[ix('コード')]||'',name:r[ix('経穴名')]||'',meridian:r[ix('経絡')]||'',reading:r[ix('読み')]||'',location:r[ix('位置')]||'',indications:r[ix('主治')]||'',memo:r[ix('その他メモ')]||'',shu:r[ix('五兪穴')]||'',phase:r[ix('五行')]||''};
+    var a=deriveShuPhase(o); if(!o.shu)o.shu=a.shu; if(!o.phase)o.phase=a.phase;
+    var key=o.code||o.name; if(!key) continue;
+    mp.set(key,Object.assign({},mp.get(key)||{},o)); count++;
+  }
+  data=Array.from(mp.values()); save(); refresh(); return count;
+}
 
 // ===== 初期データ =====
-async function importSeed(){try{const saved=load();if(saved&&saved.length){data=saved;return}const res=await fetch('./seed.json',{cache:'no-store'});if(!res.ok)throw new Error('seed.json 読み込み失敗');const arr=await res.json();data=arr.map(x=>({code:x.code||x['コード']||x.id||'',name:x.name||x['経穴名']||'',meridian:x.meridian||x['経絡']||'',reading:x.reading||x['読み']||x['経穴名_読み']||'',location:x.location||x['位置']||x['部位メモ']||'',indications:x.indications||x['主治']||x['主治メモ']||'',memo:x.memo||x['その他メモ']||'',shu:x.shu||x['五兪穴']||'',phase:x.phase||x['五行']||''}));data=data.map(deriveAndFill);save()}catch(e){alert('初期データの読込に失敗：'+e.message);data=[];save()}}
+async function importSeed(){
+  try{
+    var saved=load(); if(saved&&saved.length){ data=saved; return }
+    var res=await fetch('./seed.json',{cache:'no-store'});
+    if(!res.ok) throw new Error('seed.json 読み込み失敗');
+    var arr=await res.json();
+    data=arr.map(function(x){return{code:x.code||x['コード']||x.id||'',name:x.name||x['経穴名']||'',meridian:x.meridian||x['経絡']||'',reading:x.reading||x['読み']||x['経穴名_読み']||'',location:x.location||x['位置']||x['部位メモ']||'',indications:x.indications||x['主治']||x['主治メモ']||'',memo:x.memo||x['その他メモ']||'',shu:x.shu||x['五兪穴']||'',phase:x.phase||x['五行']||''}});
+    for(var i=0;i<data.length;i++) data[i]=deriveAndFill(data[i]);
+    save();
+  }catch(e){
+    alert('初期データの読込に失敗：'+e.message);
+    data=[]; save();
+  }
+}
 
 // ===== 初期化 =====
-(async function init(){
-  // タブ：クリックで確実に切替
-  el('tabStudy').addEventListener('click',()=>show('viewStudy','tabStudy'));
-  el('tabManage').addEventListener('click',()=>show('viewManage','tabManage'));
-  el('tabAbout').addEventListener('click',()=>show('viewAbout','tabAbout'));
-
-  // 学習ボタン
-  el('btnStart').onclick=start; el('btnFlip').onclick=flip;
-  el('btnRight').onclick=()=>markResult(true); el('btnWrong').onclick=()=>markResult(false);
-
-  // クリック/キー
-  const flash=el('flash');
-  flash.addEventListener('click',()=>{if(!session.started){start()}else if(session.mode==='flash'){flip()}})
-  document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!session.started){start()}else if(session.mode==='flash'){flip()}}});
-
-  // データ管理イベント
-  const tb=el('tbody');
-  tb.addEventListener('click',e=>{
-    const btn=e.target.closest('button[data-act]'); if(!btn) return;
-    const key=btn.dataset.key;
-    if(btn.dataset.act==='del'){
-      if(confirm('削除しますか？')){
-        const i=data.findIndex(x=>(x.code||x.name)===key); if(i!==-1){data.splice(i,1); save(); refresh(); toast('削除しました')}
-      }
-    }else if(btn.dataset.act==='dup'){
-      const i=data.findIndex(x=>(x.code||x.name)===key); if(i===-1) return;
-      const src=data[i]; let c=(src.code||src.name||'COPY')+'_copy',k=1;
-      while(data.some(x=>(x.code||x.name)===c)){ c=(src.code||src.name||'COPY')+'_copy'+(++k) }
-      data.splice(i+1,0,{...src,code:c}); save(); refresh(); toast('複製しました');
-    }
-  });
-  tb.addEventListener('blur',e=>{
-    const td=e.target.closest('td[contenteditable=true]'); if(!td) return;
-    const tr=td.closest('tr'); const oldKey=tr.querySelector('.chkRow')?.dataset.key||''; applyEdit(tr,oldKey);
-  },true);
-  el('chkAll').addEventListener('change',e=>{
-    document.querySelectorAll('.chkRow').forEach(ch=>ch.checked=e.target.checked);
-  });
-  el('btnAdd').onclick=function(){
-    let base='NEW',n=1;while(data.some(x=>(x.code||x.name)===(base+n)))n++;
-    data.unshift({code:base+n,name:'',meridian:'',reading:'',location:'',indications:'',memo:'',shu:'',phase:''});
-    save();refresh();
-  };
-  el('btnDeleteSel').onclick=function(){
-    const keys=Array.from(document.querySelectorAll('.chkRow:checked')).map(c=>c.dataset.key);
-    if(!keys.length){ alert('削除する行にチェックを付けてください'); return; }
-    if(!confirm(keys.length+' 行を削除しますか？')) return;
-    data=data.filter(x=>!keys.includes(x.code||x.name)); save(); refresh(); toast('削除しました');
-  };
-  el('btnExportCSV').onclick=function(){
-    const headers=['コード','経穴名','経絡','読み','位置','主治','その他メモ','五兪穴','五行'];
-    const lines=[headers.join(',')];
-    for(const d of data){
-      const row=[d.code||'',d.name||'',d.meridian||'',d.reading||'',d.location||'',d.indications||'',d.memo||'',d.shu||'',d.phase||''].map(csvEscape).join(',');
-      lines.push(row);
-    }
-    const BOM='\ufeff';
-    const blob=new Blob([BOM+lines.join('\n')],{type:'text/csv'});
-    const url=URL.createObjectURL(blob); const a=document.createElement('a');
-    a.href=url; a.download='keiketsu_data_v8.csv'; a.click(); URL.revokeObjectURL(url); toast('CSVを書き出しました');
-  };
-  el('btnExportJSON').onclick=function(){
-    const arr=data.map(d=>({コード:d.code||'',経穴名:d.name||'',経絡:d.meridian||'',読み:d.reading||'',位置:d.location||'',主治:d.indications||'',その他メモ:d.memo||'',五兪穴:d.shu||'',五行:d.phase||''}));
-    const blob=new Blob([JSON.stringify(arr,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob); const a=document.createElement('a');
-    a.href=url; a.download='keiketsu_data_v8.json'; a.click(); URL.revokeObjectURL(url); toast('JSONを書き出しました');
-  };
-  el('btnImport').onclick=async()=>{
-    const fi=el('fileInput');
-    if(!fi.files||!fi.files.length){ alert('CSV/JSONを選択してください'); return; }
-    await importFromFile(fi.files[0]); fi.value='';
-  };
-  el('txtFind').addEventListener('input',renderTable);
-
-  // 一括貼り付け
-  const dlg=el('dlgPaste'); el('btnBulkPaste').onclick=()=>dlg.showModal();
-  el('btnPasteCancel').onclick=()=>dlg.close();
-  el('btnPasteApply').onclick=()=>{const txt=el('taPaste').value||'';const n=importFromText(txt);dlg.close();toast(`取り込み ${n} 件`)};
-
-  // 初期データ
-  await importSeed(); refresh();
+(async function(){
+  await importSeed();
+  refresh();
 })();
+
+// ===== 参照系 =====
+function refresh(){
+  for(var i=0;i<data.length;i++) data[i]=deriveAndFill(data[i]);
+  var mer=Array.from(new Set(data.map(function(d){return d.meridian}).filter(Boolean))).sort();
+  el('filterMeridian').innerHTML='<option value="">（すべて）</option>'+mer.map(function(m){return '<option>'+m+'</option>'}).join('');
+  renderTable();
+}
 </script>
 </body>
 </html>
