@@ -75,7 +75,7 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
         <label>順序
           <select id="order">
             <option value="random">ランダム</option>
-            <option value="code">コード順（CV→GV→十二正経）</option>
+            <option value="code">コード順</option>
           </select>
         </label>
         <label>経絡
@@ -94,7 +94,7 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
           <label class="small"><input type="checkbox" id="chkMax"> 最大（全件）</label>
         </label>
         <label><input type="checkbox" id="requeueWrong" checked> 間違えた問題を最後に再出題</label>
-        <button class="btn primary" id="btnStart" type="button" onclick="try{start(true)}catch(e){alert(e)}">開始（リセット）</button>
+        <button class="btn primary" id="btnStart" type="button" onclick="try{start(true)}catch(e){alert(e)}">開始</button>
         <button class="btn" id="btnEnd" type="button" onclick="try{endSession()}catch(e){alert(e)}">終了</button>
         <span class="small" id="info"></span>
       </div>
@@ -200,7 +200,29 @@ th.col-location,td[data-key=location],th.col-indications,td[data-key=indications
 <script>
 // ===== 最低限のエラーハンドラ =====
 window.onerror=(m,src,ln,col,err)=>{alert('JS Error: '+m);console.error(err)};
+<script>
+/* …既存コード… */
 
+/* ▼ 追加：タブ切り替え関数（学習/データ管理/説明） */
+function show(viewId, tabId){
+  ['viewStudy','viewManage','viewAbout'].forEach(function(id){
+    var sec=document.getElementById(id);
+    if(sec){ sec.classList.add('hidden'); }
+  });
+  var v=document.getElementById(viewId);
+  if(v){ v.classList.remove('hidden'); }
+
+  ['tabStudy','tabManage','tabAbout'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b){ b.classList.remove('active'); }
+  });
+  var t=document.getElementById(tabId);
+  if(t){ t.classList.add('active'); }
+}
+/* ▲ 追加ここまで */
+
+/* …既存コード続き… */
+</script>
 // ===== ユーティリティ/定数 =====
 const el=id=>document.getElementById(id);
 const STORAGE='keiketsu-mini-v84';
