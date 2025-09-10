@@ -4,7 +4,24 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Keiketsu Mini v8.8a（WHO原文×編集版 二層管理）</title>
-<!-- 省略: スタイルは v8.8 と同じ -->
+<style>
+body { font-family: sans-serif; margin:0; padding:0; }
+header { background:#444; color:#fff; padding:0.5em; }
+header h1 { margin:0; font-size:1.2em; }
+nav button { margin:0 0.2em; padding:0.3em 0.6em; }
+button.active { background:#008cba; color:#fff; }
+.hidden { display:none; }
+#main { padding:1em; }
+#qText { font-size:1.2em; margin-bottom:0.5em; }
+#progress { margin-top:0.5em; font-size:0.9em; }
+#toast { position:fixed; bottom:1em; left:50%; transform:translateX(-50%);
+  background:#333; color:#fff; padding:0.5em 1em; border-radius:4px;
+  opacity:0; transition:opacity 0.3s; }
+#toast.show { opacity:1; }
+table { border-collapse: collapse; width:100%; font-size:0.9em; }
+th, td { border:1px solid #ccc; padding:0.3em; }
+td[contenteditable=true] { background:#ffe; }
+</style>
 </head>
 <body>
   <header>
@@ -16,64 +33,149 @@
     </nav>
   </header>
 
-  <!-- 省略: 本文は v8.8 と同じ（UI構造・id は同一） -->
+  <div id="main">
+    <!-- 学習ビュー -->
+    <section id="viewStudy">
+      <div>
+        出題形式:
+        <select id="mode">
+          <option value="flash">フラッシュカード</option>
+          <option value="mcq">四択クイズ</option>
+        </select>
+        出題方向:
+        <select id="qaPreset">
+          <option value="name->location">経穴名 → 位置</option>
+          <option value="code->name">コード → 経穴名</option>
+          <option value="name->indications">経穴名 → 主治</option>
+          <option value="code->location">コード → 位置</option>
+          <option value="location->name">位置 → 経穴名</option>
+        </select>
+        出題順:
+        <select id="order">
+          <option value="random">ランダム</option>
+          <option value="code">コード順</option>
+        </select>
+        出題数:
+        <input id="limit" type="number" value="20" style="width:4em"> 
+        <label><input type="checkbox" id="chkMax"> 最大</label>
+        <label><input type="checkbox" id="requeueWrong" checked> 間違えた問題を最後に再出題</label>
+        <button class="btn primary" id="btnStart" type="button" onclick="start(true)">開始</button>
+        <button class="btn" id="btnEnd" type="button" onclick="endSession()">終了</button>
+      </div>
+      <hr/>
+      <div id="qText">「開始」を押してください</div>
+      <div id="aText"></div>
+      <div id="subText"></div>
+      <div id="mcqArea" class="hidden"></div>
+      <div id="progress"></div>
+    </section>
+
+    <!-- データ管理ビュー -->
+    <section id="viewManage" class="hidden">
+      <div>
+        <button onclick="onAddClick()">新規行追加</button>
+        <button onclick="onBulkPasteOpen()">一括貼り付け</button>
+        <input type="file" id="fileInput"/>
+        <button onclick="onImportClick()">インポート</button>
+        <button onclick="onExportCSV()">CSV書き出し</button>
+        <button onclick="onExportJSON()">JSON書き出し</button>
+        <input id="txtFind" placeholder="検索..." oninput="refresh()"/>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="chkAll" onclick="onCheckAll(this)"></th>
+            <th>コード</th><th>経穴名</th><th>経絡</th><th>読み</th>
+            <th>位置(WHO原文)</th><th>位置(編集版)</th><th>主治</th><th>その他メモ</th>
+            <th>五兪穴</th><th>五行</th><th>編集済</th><th>有効</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="info"></div>
+    </section>
+
+    <!-- 説明ビュー -->
+    <section id="viewAbout" class="hidden">
+      <p>Keiketsu Mini v8.8a<br/>WHO原文と編集版を二層で管理できます。</p>
+    </section>
+  </div>
 
   <script>
   // ===== ユーティリティ =====
   function el(id){ return document.getElementById(id); }
-  (function(){
-    // タブ切替：グローバル明示
-    function switchView(viewId, tabId){
-      ['viewStudy','viewManage','viewAbout'].forEach(function(id){
-        var sec = el(id); if(sec) sec.classList.add('hidden');
-      });
-      var v=el(viewId); if(v) v.classList.remove('hidden');
-      ['tabStudy','tabManage','tabAbout'].forEach(function(id){
-        var b = el(id); if(b) b.classList.remove('active');
-      });
-      var t=el(tabId); if(t) t.classList.add('active');
-    }
-    window.switchView = switchView; // ← グローバル公開
-  })();
+  function switchView(viewId, tabId){
+    ['viewStudy','viewManage','viewAbout'].forEach(function(id){
+      var sec = el(id); if(sec) sec.classList.add('hidden');
+    });
+    var v=el(viewId); if(v) v.classList.remove('hidden');
+    ['tabStudy','tabManage','tabAbout'].forEach(function(id){
+      var b = el(id); if(b) b.classList.remove('active');
+    });
+    var t=el(tabId); if(t) t.classList.add('active');
+  }
+  window.switchView = switchView;
   </script>
 
   <script>
-  // ====== ここからアプリ本体（v8.8 をベースに、関数をすべて window に公開） ======
-  var STORAGE='keiketsu-mini-v88a';
+  // ====== アプリ本体 ======
+  const STORAGE='keiketsu-mini-v88a';
+  let data=[], filtered=[];
+
   function toast(msg){ var t=el('toast'); t.textContent=msg; t.classList.add('show');
     clearTimeout(window._toastT); window._toastT=setTimeout(function(){t.classList.remove('show')},1500); }
 
-  // …（中略：v8.8 と同じロジック：二層位置・並び順・四択・再出題・有効/無効など）
+  function truthyEnabled(v){ return (v===true||v===1||v==="1"); }
 
-  // --- 重要：inline onclick から呼ばれる関数はすべて window.* で公開 ---
-  window.start = start;
-  window.endSession = endSession;
-  window.flip = flip;
-  window.markResult = markResult;
-  window.flashClick = flashClick;
-  window.onImportClick = onImportClick;
-  window.onAddClick = onAddClick;
-  window.onBulkPasteOpen = onBulkPasteOpen;
-  window.onPasteCancel = onPasteCancel;
-  window.onPasteApply = onPasteApply;
-  window.onDeleteSelected = onDeleteSelected;
-  window.onExportCSV = onExportCSV;
-  window.onExportJSON = onExportJSON;
-  window.onCheckAll = onCheckAll;
-  window.rowDup = rowDup;
-  window.rowDel = rowDel;
+  function deriveAndFill(d){
+    if(d.enabled==null) d.enabled=true;
+    if(d.edited==null) d.edited=0;
+    return d;
+  }
 
-  // 初期化
-  (async function(){ await importSeed(); refresh(); })();
+  const save=()=>localStorage.setItem(STORAGE,JSON.stringify(data));
+  const load=()=>{try{const raw=localStorage.getItem(STORAGE);if(raw){const arr=JSON.parse(raw);if(Array.isArray(arr))return arr}}catch(e){}return null};
+
+  // 出題セッション（簡略化）
+  let session={list:[],i:0,mode:'flash',correct:0,wrong:0,showingAnswer:false,started:false,qKey:'name',aKey:'location_edit',requeueWrong:true,order:'random'};
+
+  function labelFor(k){return {code:'コード',name:'経穴名',location_edit:'位置',indications:'主治'}[k]||k;}
+
+  function applyPreset(){ const p={'name->location':{qKey:'name',aKey:'location_edit'}}[el('qaPreset').value]||{qKey:'name',aKey:'location_edit'}; session.qKey=p.qKey; session.aKey=p.aKey; }
+
+  function applyPresetAndFilterPool(){
+    applyPreset();
+    let pool=data.filter(x=>x.enabled);
+    pool=pool.filter(x=>(x[session.qKey]||'').trim()&&( (x[session.aKey]||x.location_who||'').trim()));
+    return pool;
+  }
+
+  function start(){
+    const pool=applyPresetAndFilterPool();
+    session.list=pool; session.i=0; session.started=true;
+    showFront();
+  }
+  window.start=start;
+
+  function endSession(){ session.started=false; el('qText').textContent="終了しました"; el('aText').textContent=""; }
+  window.endSession=endSession;
+
+  function current(){return session.list[session.i]}
+  function showFront(){ const it=current(); if(!it){el('qText').textContent="なし";return;}
+    el('qText').textContent=labelFor(session.qKey)+": "+(it[session.qKey]||'');
+    el('aText').textContent=""; }
+  function showBack(){ const it=current(); if(!it) return;
+    el('qText').textContent=labelFor(session.aKey)+": "+(it[session.aKey]||it.location_who||''); }
+  function flip(){ if(session.showingAnswer)showFront(); else showBack(); session.showingAnswer=!session.showingAnswer; }
+  window.flip=flip;
   </script>
 
-  <!-- シード（少量のサンプル。運用時は全データをJSONで） -->
   <script type="application/json" id="seedData">
   [
-    {"code":"CV12","name":"中脘","meridian":"任脈","reading":"ちゅうかん","location_who":"臍の上4寸、前正中線上","location_edit":"","indications":"胃痛、消化不良、嘔吐、食欲不振","memo":"","shu":"","phase":"","edited":0,"enabled":1},
-    {"code":"GV14","name":"大椎","meridian":"督脈","reading":"だいつい","location_who":"第7頚椎棘突起下、後正中線上","location_edit":"","indications":"風邪、発熱、頚肩の痛み","memo":"","shu":"","phase":"","edited":0,"enabled":1},
-    {"code":"LU1","name":"中府","meridian":"手の太陰肺経","reading":"ちゅうふ","location_who":"第1肋間、前正中線の外方6寸","location_edit":"","indications":"咳、喘息、胸痛","memo":"","shu":"","phase":"","edited":0,"enabled":1},
-    {"code":"LI11","name":"曲池","meridian":"手の陽明大腸経","reading":"きょくち","location_who":"肘を屈曲してできる横紋の外側端","location_edit":"","indications":"発熱、皮膚疾患、高血圧","memo":"","shu":"","phase":"","edited":0,"enabled":1}
+    {"code":"CV12","name":"中脘","meridian":"任脈","reading":"ちゅうかん","location_who":"臍の上4寸、前正中線上","location_edit":"","indications":"胃痛、消化不良","memo":"","shu":"","phase":"","edited":0,"enabled":1},
+    {"code":"GV14","name":"大椎","meridian":"督脈","reading":"だいつい","location_who":"第7頚椎棘突起下、後正中線上","location_edit":"","indications":"風邪、発熱","memo":"","shu":"","phase":"","edited":0,"enabled":1},
+    {"code":"LU1","name":"中府","meridian":"手の太陰肺経","reading":"ちゅうふ","location_who":"第1肋間、前正中線の外方6寸","location_edit":"","indications":"咳、喘息","memo":"","shu":"","phase":"","edited":0,"enabled":1},
+    {"code":"LI11","name":"曲池","meridian":"手の陽明大腸経","reading":"きょくち","location_who":"肘を屈曲してできる横紋の外側端","location_edit":"","indications":"発熱、皮膚病","memo":"","shu":"","phase":"","edited":0,"enabled":1}
   ]
   </script>
 
