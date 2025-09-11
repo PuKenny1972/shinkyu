@@ -156,6 +156,7 @@ hr.sep{border:0;border-top:1px dashed var(--border);margin:10px 0}
 
   <!-- 説明 -->
   <section id="viewAbout" class="hidden">
+    <button class="btn" onclick="resetToSeed()">サンプルを読み込む（初期化）</button>
     <div class="card">
       <h3>このアプリについて（v9.0）</h3>
       <ul>
@@ -196,6 +197,15 @@ hr.sep{border:0;border-top:1px dashed var(--border);margin:10px 0}
   {"code":"SP6","name":"三陰交","meridian":"足の太陰脾経","reading":"さんいんこう","location_edit":"","location_who":"内果尖の上3寸、脛骨後縁","indications":"婦人科・泌尿器の諸症","memo":"","shu":"","phase":"","edited":0,"enabled":1},
   {"code":"HT7","name":"神門","meridian":"手の少陰心経","reading":"しんもん","location_edit":"","location_who":"手関節横紋上、尺側手根屈筋腱の橈側","indications":"不眠、動悸、精神安定","memo":"","shu":"兪","phase":"土","edited":0,"enabled":1}
 ]
+   <script>
+  function resetToSeed(){
+    try{
+      localStorage.removeItem(STORAGE);  // 既存データを消す
+    }catch(e){}
+    location.reload(); // 再読込で seedData から再構築
+  }
+  window.resetToSeed = resetToSeed;
+  </script> 
 </script>
 
 <div id="toast" role="status" aria-live="polite"></div>
