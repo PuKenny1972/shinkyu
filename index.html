@@ -167,8 +167,8 @@ hr.sep{border:0;border-top:1px dashed var(--border);margin:10px 0}
       <hr class="sep"/>
       <p class="small">初期サンプルはWHO要約の一部10穴です。授業配布のCSVテキストを「一括貼り付け」から取り込んでご利用ください。</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" onclick="resetToSeed()">サンプルを読み込む（初期化）</button>
-        <button class="btn" onclick="forceSeed()">サンプル10穴を強制投入</button>
+        <button class="btn" id="btnResetSeed">サンプルを読み込む（初期化）</button>
+        <button class="btn" id="btnForceSeed">サンプル10穴を強制投入</button>
       </div>
     </div>
   </section>
@@ -595,5 +595,50 @@ window.onAddClick=onAddClick; window.onImportClick=onImportClick; window.onExpor
 window.onBulkPasteOpen=onBulkPasteOpen; window.onPasteCancel=onPasteCancel; window.onPasteApply=onPasteApply;
 window.onDeleteSelected=onDeleteSelected; window.onCheckAll=onCheckAll; window.rowDel=rowDel; window.rowDup=rowDup;
 </script>
+    <!-- 他のスクリプトが終わったあと -->
+
+  <script>
+  /* --- seedボタン救急バインド & URLトリガー --- */
+  (function(){
+    function bindClick(id, fn){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('click', function(e){
+        e.preventDefault();
+        try{
+          if (typeof window[fn] === 'function') {
+            window[fn]();
+          } else {
+            alert('機能が未定義です：' + fn);
+          }
+        }catch(err){ alert('エラー：'+err.message); }
+      });
+    }
+
+    // ボタンと関数を関連付け
+    bindClick('btnResetSeed', 'resetToSeed');
+    bindClick('btnForceSeed', 'forceSeed');
+
+    // URLトリガー（?seed=reset / ?seed=force）
+    var q = new URLSearchParams(location.search);
+    var seed = (q.get('seed')||'').toLowerCase();
+    if (seed === 'reset') {
+      if (typeof window.resetToSeed === 'function') window.resetToSeed();
+    } else if (seed === 'force') {
+      if (typeof window.forceSeed === 'function') window.forceSeed();
+    }
+
+    // 実行確認マーク
+    var ok = document.createElement('div');
+    ok.textContent = 'SEED Binder OK';
+    ok.style.position='fixed'; ok.style.right='10px'; ok.style.bottom='10px';
+    ok.style.background='rgba(14,165,233,.92)'; ok.style.color='#fff';
+    ok.style.padding='4px 8px'; ok.style.borderRadius='8px';
+    ok.style.fontSize='12px'; ok.style.zIndex='9999';
+    document.body.appendChild(ok); setTimeout(function(){ ok.remove(); }, 2200);
+  })();
+  </script>
+</body>
+</html>
 </body>
 </html>
