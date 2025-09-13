@@ -206,6 +206,15 @@ hr.sep{border:0;border-top:1px dashed var(--border);margin:10px 0}
     location.reload(); // 再読込で seedData から再構築
   }
   window.resetToSeed = resetToSeed;
+  <script>
+function resetToSeed(){
+  try{
+    localStorage.removeItem(STORAGE);  // 既存データを消す
+  }catch(e){}
+  location.reload(); // 再読込で seedData から再構築
+}
+window.resetToSeed = resetToSeed;
+</script>
   </script> 
 </script>
 
