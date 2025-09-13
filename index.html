@@ -56,6 +56,15 @@ th.col-shu,td[data-key=shu]{width:56px}
 th.col-phase,td[data-key=phase]{width:56px}
 th.col-edited{width:78px}
 th.col-enabled{width:72px}
+  /* 追加：上下のスクロール幅を合わせる保険 */
+.hscroll-top, .grid{
+  scrollbar-gutter: stable both-edges; /* 縦スクロール分の幅をあらかじめ確保してズレ防止 */
+  box-sizing: border-box;
+}
+.hscroll-top{
+  height: 16px;         /* 少し高めに（好みでOK） */
+  padding-bottom: 0;    /* 余白でズレないように */
+}
 </style>
 </head>
 <body>
@@ -430,6 +439,9 @@ function renderTable(){
   // 上部横スクロールの幅調整
   const grid=el('gridMain'), topBar=el('hscrollTop'), dummy=el('hscrollDummy');
   dummy.style.width = (el('dataTable').scrollWidth || 1200) + 'px';
+  // ← ここから追記：縦スクロールバーの幅分だけ上バーの右に余白を足して「見かけの可動幅」を一致させる
+const sbw = grid.offsetWidth - grid.clientWidth;   // スクロールバーの実幅（環境依存）
+topBar.style.paddingRight = sbw > 0 ? (sbw + 'px') : '0px';
 }
 </script>
 
