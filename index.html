@@ -2,23 +2,19 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Keiketsu Simple – 学習だけ版</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Keiketsu Simple – 学習だけ版 v1.1</title>
 <style>
   :root{
-    --bg:#0f172a;       /* slate-900 */
-    --panel:#111827;    /* gray-900 */
-    --muted:#94a3b8;    /* slate-400 */
-    --text:#e5e7eb;     /* gray-200 */
-    --accent:#22d3ee;   /* cyan-400 */
-    --ok:#22c55e;       /* green-500 */
-    --ng:#ef4444;       /* red-500 */
+    --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb;
+    --accent:#22d3ee; --ok:#22c55e; --ng:#ef4444;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
     margin:0; background:linear-gradient(180deg,#0b1220,#0f172a);
-    color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
+    color:var(--text);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
   }
   .wrap{max-width:980px;margin:0 auto;padding:14px}
   h1{font-size:20px;margin:0 0 12px;font-weight:700;letter-spacing:.02em}
@@ -32,14 +28,17 @@
   select,input[type="number"]{
     width:100%; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
     background:#0b1220; color:var(--text); outline:none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   .row{display:flex;align-items:center;gap:8px}
-  .row input[type="checkbox"]{transform:scale(1.2)}
+  .row input[type="checkbox"]{transform:scale(1.2); touch-action: manipulation;}
   .btn{
     cursor:pointer; user-select:none; border:1px solid rgba(255,255,255,.14);
     background:linear-gradient(180deg,#1f2937,#111827); color:var(--text);
-    padding:10px 14px; border-radius:12px; font-weight:600; letter-spacing:.02em;
-    transition:.15s; text-align:center;
+    padding:10px 14px; border-radius:12px; font-weight:600; letter-spacing:.02em; transition:.15s; text-align:center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   .btn:hover{transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,0,0,.35)}
   .btn.accent{border-color:rgba(34,211,238,.6); box-shadow:0 0 0 1px rgba(34,211,238,.25) inset}
@@ -57,7 +56,6 @@
   .mcq .btn{width:100%}
   .mcq .btn.correct{outline:2px solid var(--ok)}
   .mcq .btn.wrong{outline:2px solid var(--ng)}
-
   .progress{margin-top:10px;color:var(--muted);font-size:13px}
   .toast{
     position:fixed; left:50%; bottom:20px; transform:translateX(-50%) translateY(16px);
@@ -66,16 +64,13 @@
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
   .grid-ops{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
-  @media (min-width:760px){
-    .mcq{grid-template-columns:repeat(2,minmax(0,1fr))}
-  }
+  @media (min-width:760px){ .mcq{grid-template-columns:repeat(2,minmax(0,1fr))} }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Keiketsu Simple（学習だけ版）</h1>
 
-  <!-- コントロールバー -->
   <div class="bar">
     <div>
       <label for="preset">出題形式</label>
@@ -116,16 +111,13 @@
     </div>
   </div>
 
-  <!-- 学習カード -->
   <div class="card" id="card">
     <div id="q" class="q">「開始」を押してください</div>
     <div id="a" class="a"></div>
     <div id="sub" class="sub">クリック / Enter / Space で裏返し（フラッシュカード時）</div>
 
-    <!-- 四択 -->
     <div id="mcq" class="mcq" style="display:none"></div>
 
-    <!-- 操作 -->
     <div class="grid-ops">
       <button id="btnShow" class="btn" type="button">表示 / 裏返し</button>
       <button id="btnOK" class="btn ok" type="button">正解</button>
@@ -137,10 +129,8 @@
   </div>
 </div>
 
-<!-- トースト -->
 <div id="toast" class="toast"></div>
 
-<!-- 初期サンプル（10穴・英語キー固定） -->
 <script type="application/json" id="seedData">
 [
   {"code":"LU1","name":"中府","meridian":"手の太陰肺経","reading":"ちゅうふ","location":"前胸部・第1肋間、前正中線から外方6寸。","indications":"咳、喘息、胸痛、肩前部痛","memo":"","shu":"井","phase":"木"},
@@ -157,10 +147,23 @@
 </script>
 
 <script>
-/* ========= ユーティリティ ========= */
+/* ===== タップ応答最適化 ===== */
 const $ = id => document.getElementById(id);
-const toast = (msg)=>{ const el=$('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),1400); };
+function onTap(el, handler, opts={}) {
+  // pointerup で即時反応 + click 二重発火ガード
+  let last=0;
+  const wrap = (e)=>{
+    if(opts.stop) e.stopPropagation();
+    const now=Date.now();
+    if (e.type==='click' && now-last<350) return; // 直前のpointerupと重複
+    last=now;
+    handler(e);
+  };
+  el.addEventListener('pointerup', wrap, {passive:true, capture:!!opts.capture});
+  el.addEventListener('click',     wrap, {capture:!!opts.capture});
+}
 
+/* ========= 定数 ========= */
 const PRESETS = {
   'name->location': {q:'name', a:'location'},
   'location->name': {q:'location', a:'name'},
@@ -168,10 +171,8 @@ const PRESETS = {
   'name->indications': {q:'name', a:'indications'},
   'code->location': {q:'code', a:'location'}
 };
-
-// コード順：CV → GV → LU → LI → ST → SP → HT → SI → BL → KI → PC → SJ → GB → LV
-const PREFIX_ORDER = ['CV','GV','LU','LI','ST','SP','HT','SI','BL','KI','PC','SJ','GB','LV'];
-const RANK = Object.fromEntries(PREFIX_ORDER.map((p,i)=>[p,i]));
+const ORDER = ['CV','GV','LU','LI','ST','SP','HT','SI','BL','KI','PC','SJ','GB','LV'];
+const RANK = Object.fromEntries(ORDER.map((p,i)=>[p,i]));
 function parseCode(s){
   const m = String(s||'').toUpperCase().replace('-','').match(/^([A-Z]+)(\d+)$/);
   if(!m) return {p:'', n:1e9, raw:String(s||'')};
@@ -184,66 +185,40 @@ function codeCompare(a,b){
   if(A.n!==B.n) return A.n-B.n;
   return (A.raw).localeCompare(B.raw);
 }
+const toast=(msg)=>{const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),1400)}
 
-/* ========= データ読み込み ========= */
-let pool = [];
-(function loadSeed(){
-  try{
-    const raw = $('seedData').textContent.trim();
-    pool = JSON.parse(raw);
-  }catch(e){
-    pool = [];
-    alert('初期データ読み込みエラー: '+ e.message);
-  }
+/* ========= 初期データ ========= */
+let pool=[];
+(function(){
+  try{ pool = JSON.parse($('seedData').textContent.trim()); }
+  catch(e){ pool=[]; alert('初期データ読み込みエラー: '+e.message); }
 })();
 
-/* ========= セッション状態 ========= */
-const S = {
-  list:[], i:0, started:false,
-  mode:'flash', showing:false,
-  qKey:'name', aKey:'location',
-  requeue:true, order:'random',
-  correct:0, wrong:0
-};
+/* ========= 状態 ========= */
+const S={list:[],i:0,started:false,mode:'flash',showing:false,qKey:'name',aKey:'location',requeue:true,order:'random',correct:0,wrong:0};
+const labelOf=k=>({code:'コード',name:'経穴名',location:'位置',indications:'主治'})[k]||k;
 
-function labelOf(k){
-  return ({code:'コード', name:'経穴名', location:'位置', indications:'主治'})[k] || k;
-}
-
-/* ========= 画面更新 ========= */
+/* ========= 表示 ========= */
 function clearUI(){
   $('q').textContent='「開始」を押してください';
   $('a').textContent='';
   $('sub').textContent='クリック / Enter / Space で裏返し（フラッシュカード時）';
-  $('mcq').style.display='none';
-  $('mcq').innerHTML='';
-  $('progress').textContent='';
-  S.showing=false;
+  $('mcq').style.display='none'; $('mcq').innerHTML='';
+  $('progress').textContent=''; S.showing=false;
 }
-
-function setQA(qText, aHtml=''){
-  $('q').textContent=qText;
-  $('a').innerHTML=aHtml;
-}
-
-function updateProgress(){
-  $('progress').textContent = `進捗：${Math.min(S.i+1, S.list.length)}/${S.list.length}（正 ${S.correct}・誤 ${S.wrong}）`;
-}
+function setQA(q, a=''){ $('q').textContent=q; $('a').innerHTML=a; }
+function updateProgress(){ $('progress').textContent=`進捗：${Math.min(S.i+1,S.list.length)}/${S.list.length}（正 ${S.correct}・誤 ${S.wrong}）`; }
 
 function showFront(){
-  const it = S.list[S.i];
+  const it=S.list[S.i];
   setQA(`${labelOf(S.qKey)}：${it[S.qKey]||'—'}`, '');
-  $('sub').textContent = 'クリック / Enter / Space で裏面表示';
-  $('mcq').style.display='none';
-  S.showing=false;
+  $('sub').textContent='クリック / Enter / Space で裏面表示';
+  $('mcq').style.display='none'; S.showing=false;
 }
-
 function showBack(){
-  const it = S.list[S.i];
-  const meta = [
-    (it.code||''), (it.meridian||'')
-  ].filter(Boolean).join(' / ');
-  const body = [
+  const it=S.list[S.i];
+  const meta=[(it.code||''),(it.meridian||'')].filter(Boolean).join(' / ');
+  const body=[
     meta && `<div><b>${meta}</b></div>`,
     `経穴名：${it.name||'—'}`,
     `位置：${it.location||'—'}`,
@@ -251,164 +226,107 @@ function showBack(){
     it.memo?`メモ：${it.memo}`:''
   ].filter(Boolean).join('\n');
   setQA(`${labelOf(S.aKey)}：${it[S.aKey]||'—'}`, body);
-  $('sub').textContent = 'もう一度で表へ';
-  $('mcq').style.display='none';
-  S.showing=true;
+  $('sub').textContent='もう一度で表へ';
+  $('mcq').style.display='none'; S.showing=true;
 }
+function flip(){ if(!S.started){toast('先に「開始」してください');return} if(S.mode!=='flash')return; S.showing?showFront():showBack(); }
 
-function flip(){
-  if(!S.started) { toast('先に「開始」してください'); return; }
-  if(S.mode!=='flash') return;
-  S.showing ? showFront() : showBack();
-}
-
-/* ========= MCQ ========= */
+/* ========= 四択 ========= */
 function buildMCQ(){
-  const it = S.list[S.i];
-  const area = $('mcq');
+  const it=S.list[S.i], area=$('mcq');
   area.innerHTML=''; area.style.display='grid';
-  const poolA = Array.from(new Set(pool.map(x=>x[S.aKey]).filter(v=>String(v||'').trim()))); // 候補文字列集合
-  const correct = it[S.aKey]||'—';
-  const opts = [correct];
-
-  // ダミーを追加
-  while(opts.length<4 && poolA.length){
-    const j = Math.floor(Math.random()*poolA.length);
-    const cand = poolA.splice(j,1)[0];
-    if(!opts.includes(cand)) opts.push(cand);
+  const correct=it[S.aKey]||'—';
+  const choices = Array.from(new Set(pool.map(x=>x[S.aKey]).filter(v=>String(v||'').trim())));
+  const opts=[correct];
+  while(opts.length<4 && choices.length){
+    const j=Math.floor(Math.random()*choices.length);
+    const c=choices.splice(j,1)[0];
+    if(!opts.includes(c)) opts.push(c);
   }
   while(opts.length<4) opts.push(correct);
-
-  // シャッフル
-  for(let i=opts.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [opts[i],opts[j]]=[opts[j],opts[i]];
-  }
-
-  // 配置
+  for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]]}
   opts.forEach(text=>{
     const b=document.createElement('button');
-    b.className='btn';
-    b.type='button';
-    b.textContent=text;
-    b.onclick=()=>{
+    b.className='btn'; b.type='button'; b.textContent=text;
+    onTap(b, ()=>{
       if(b.dataset.done) return;
       if(text===correct){ b.classList.add('correct'); S.correct++; toast('正解'); }
       else { b.classList.add('wrong'); S.wrong++; if(S.requeue) S.list.push(it); toast('不正解'); }
-      b.dataset.done='1';
-      setTimeout(next, 280);
-    };
+      b.dataset.done='1'; setTimeout(next,280);
+    }, {stop:true});
     area.appendChild(b);
   });
-
   setQA(`${labelOf(S.qKey)}：${it[S.qKey]||'—'}`, '');
   $('sub').textContent='';
 }
 
-/* ========= フロー ========= */
+/* ========= ロジック ========= */
 function prepareList(){
-  // 設定反映
-  const p = PRESETS[$('preset').value] || PRESETS['name->location'];
-  S.qKey=p.q; S.aKey=p.a;
-  S.mode = $('mode').value;
-  S.requeue = $('requeue').checked;
-  S.order = $('order').value;
-
-  // 有効なQ/Aが揃っているものだけ
-  let arr = pool.filter(x=> String(x[S.qKey]||'').trim() && String(x[S.aKey]||'').trim());
-
-  // 並び順
+  const p=({'name->location':0,'location->name':0,'code->name':0,'name->indications':0,'code->location':0}[$('preset').value]!=null)
+    ? PRESETS[$('preset').value] : PRESETS['name->location'];
+  S.qKey=p.q; S.aKey=p.a; S.mode=$('mode').value; S.requeue=$('requeue').checked; S.order=$('order').value;
+  let arr=pool.filter(x=>String(x[S.qKey]||'').trim() && String(x[S.aKey]||'').trim());
   if(S.order==='code') arr.sort(codeCompare);
-  else {
-    for(let i=arr.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
-      [arr[i],arr[j]]=[arr[j],arr[i]];
-    }
-  }
-
-  // 出題数
-  const useMax = $('useMax').checked;
-  let n = parseInt($('limit').value||'20',10);
-  if(!(n>0)) n=20;
-  const take = useMax ? arr.length : Math.min(Math.max(1,n), arr.length);
-  return arr.slice(0,take);
+  else for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}
+  const useMax=$('useMax').checked; let n=parseInt($('limit').value||'20',10); if(!(n>0)) n=20;
+  return arr.slice(0, useMax?arr.length:Math.min(Math.max(1,n),arr.length));
 }
-
 function start(){
-  // UIリセット
   clearUI();
-
-  const list = prepareList();
-  if(!list.length){
-    $('q').textContent='出題可能なデータがありません（形式とサンプルをご確認ください）';
-    return;
-  }
-  S.list=list; S.i=0; S.correct=0; S.wrong=0; S.started=true; S.showing=false;
-
-  if(S.mode==='mcq') buildMCQ();
-  else showFront();
-  updateProgress();
-  toast('開始しました');
+  const list=prepareList();
+  if(!list.length){ $('q').textContent='出題可能なデータがありません'; return; }
+  Object.assign(S,{list,i:0,correct:0,wrong:0,started:true,showing:false});
+  if(S.mode==='mcq') buildMCQ(); else showFront();
+  updateProgress(); toast('開始しました');
 }
-
 function end(){
   if(!S.started){ clearUI(); return; }
   S.started=false;
   $('q').textContent='セッション終了';
   $('a').textContent=`正解 ${S.correct} / 不正解 ${S.wrong}`;
-  $('sub').textContent='';
-  $('mcq').style.display='none';
-  $('progress').textContent='';
+  $('sub').textContent=''; $('mcq').style.display='none'; $('progress').textContent='';
 }
-
 function next(){
   if(!S.started) return;
-  S.i++;
-  if(S.i>=S.list.length){
+  if(++S.i>=S.list.length){
     $('q').textContent='セッション完了！';
     $('a').textContent=`正解 ${S.correct} / 不正解 ${S.wrong}`;
-    $('sub').textContent='';
-    $('mcq').style.display='none';
-    $('progress').textContent='';
-    S.started=false;
-    toast('おつかれさま！');
-    return;
+    $('sub').textContent=''; $('mcq').style.display='none'; $('progress').textContent='';
+    S.started=false; toast('おつかれさま！'); return;
   }
   if(S.mode==='mcq') buildMCQ(); else showFront();
   updateProgress();
 }
-
 function mark(ok){
   if(!S.started){ toast('先に「開始」してください'); return; }
-  const it = S.list[S.i];
+  const it=S.list[S.i];
   if(ok){ S.correct++; toast('正解'); }
   else { S.wrong++; if(S.requeue) S.list.push(it); toast('不正解'); }
   next();
 }
 
-/* ========= イベント ========= */
-$('btnStart').addEventListener('click', start);
-$('btnEnd').addEventListener('click', end);
-$('btnShow').addEventListener('click', flip);
-$('btnNext').addEventListener('click', next);
-$('btnOK').addEventListener('click', ()=>mark(true));
-$('btnNG').addEventListener('click', ()=>mark(false));
-
-// カードクリックで裏返し（フラッシュ時のみ）
-$('card').addEventListener('click', e=>{
-  // ボタンのクリックは除外
-  if(e.target.closest('.btn')) return;
-  flip();
+/* ========= イベント（pointer優先） ========= */
+['btnStart','btnEnd','btnShow','btnNext','btnOK','btnNG'].forEach(id=>{
+  const el=$(id);
+  onTap(el, (e)=>{
+    switch(id){
+      case 'btnStart': start(); break;
+      case 'btnEnd':   end(); break;
+      case 'btnShow':  flip(); break;
+      case 'btnNext':  next(); break;
+      case 'btnOK':    mark(true); break;
+      case 'btnNG':    mark(false); break;
+    }
+  }, {stop:true, capture:true});
 });
 
-// キー操作（Enter/Space）
+// カードの空所タップで裏返し（ボタンタップはstop済み）
+onTap($('card'), ()=>flip());
+
+// キー操作
 document.addEventListener('keydown', e=>{
-  if(e.key==='Enter' || e.key===' '){
-    e.preventDefault();
-    flip();
-  }
+  if(e.key==='Enter' || e.key===' '){ e.preventDefault(); flip(); }
 });
-
 </script>
 </body>
 </html>
