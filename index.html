@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Keiketsu Mini v9.6 Integrated</title>
+<title>Keiketsu Mini v9.7 Integrated</title>
 <meta name="theme-color" content="#0ea5e9"/>
 <style>
 :root{
@@ -14,15 +14,9 @@
 html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,Arial,"Noto Sans JP","Hiragino Kaku Gothic ProN",Meiryo,sans-serif}
 .hidden{display:none!important}
 
-/* ===== Header / Hero ===== */
-.header-wrap{
-  position:sticky;top:0;z-index:30;
-  background:linear-gradient(90deg,#0ea5e9,#38bdf8);
-  color:#fff;border-bottom:1px solid rgba(255,255,255,.25)
-}
-header{
-  max-width:1180px;margin:0 auto;padding:14px 12px;display:flex;align-items:center;gap:12px
-}
+/* ===== Header ===== */
+.header-wrap{position:sticky;top:0;z-index:30;background:linear-gradient(90deg,#0ea5e9,#38bdf8);color:#fff;border-bottom:1px solid rgba(255,255,255,.25)}
+header{max-width:1180px;margin:0 auto;padding:14px 12px;display:flex;align-items:center;gap:12px}
 header h1{margin:0;font-size:18px;font-weight:800;letter-spacing:.2px}
 .badge{margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);font-size:12px}
 nav{margin-left:auto;display:flex;gap:8px}
@@ -92,7 +86,7 @@ th.col-enabled{width:72px;text-align:center}
 <body>
 <div class="header-wrap">
   <header>
-    <h1>Keiketsu Mini <span class="badge">v9.6 Integrated</span></h1>
+    <h1>Keiketsu Mini <span class="badge">v9.7 Integrated</span></h1>
     <nav>
       <button id="tabStudy" class="active" onclick="switchView('viewStudy','tabStudy')">学習</button>
       <button id="tabManage" onclick="switchView('viewManage','tabManage')">データ管理</button>
@@ -161,16 +155,19 @@ th.col-enabled{width:72px;text-align:center}
 
   <!-- データ管理 -->
   <section id="viewManage" class="hidden">
-    <div class="section-title">🗂️ <b>データ管理</b><span class="small">（「位置」は編集版が出題に使われ、WHO要約は参考用）</span></div>
+    <div class="section-title">🗂️ <b>データ管理</b><span class="small">（「位置」は編集版が出題に使用、WHO要約は参考）</span></div>
     <div class="card">
       <div class="toolbar">
-        <button class="btn" onclick="onAddClick()">行を追加</button>
-        <button class="btn warn" onclick="onBulkPasteOpen()">一括貼り付け</button>
-        <input id="fileInput" type="file" accept=".csv,.json">
-        <button class="btn" onclick="onImportClick()">インポート</button>
-        <button class="btn" onclick="onExportCSV()">CSV書き出し</button>
-        <button class="btn" onclick="onExportJSON()">JSON書き出し</button>
-        <input id="txtFind" type="text" placeholder="検索（コード/経穴名/位置/主治/メモ/五兪/五行）" oninput="renderTable()" style="flex:1;min-width:220px">
+        <button class="btn" id="btnAdd">行を追加</button>
+        <button class="btn warn" id="btnPaste">一括貼り付け</button>
+        <input id="fileInput" type="file"
+          accept=".csv,.CSV,.json,.JSON,text/csv,application/json"
+          aria-label="CSVまたはJSONを選択">
+        <button class="btn" id="btnImport" disabled>インポート</button>
+        <button class="btn" id="btnExportCSV">CSV書き出し</button>
+        <button class="btn" id="btnExportJSON">JSON書き出し</button>
+        <button class="btn danger" id="btnDeleteAll">全データ削除</button>
+        <input id="txtFind" type="text" placeholder="検索（コード/経穴名/位置/主治/メモ/五兪/五行）" style="flex:1;min-width:220px">
       </div>
 
       <div class="grid-wrap">
@@ -179,7 +176,7 @@ th.col-enabled{width:72px;text-align:center}
           <table id="dataTable">
             <thead>
               <tr>
-                <th style="width:30px"><input type="checkbox" id="chkAll" onclick="onCheckAll(this)"></th>
+                <th style="width:30px"><input type="checkbox" id="chkAll"></th>
                 <th class="col-code">コード</th>
                 <th class="col-name">経穴名</th>
                 <th class="col-meridian">経絡</th>
@@ -223,7 +220,7 @@ th.col-enabled{width:72px;text-align:center}
   </section>
 </main>
 
-<div class="footer-note">© Keiketsu Mini v9.6 – タブ切替・UI強化・編集/有効/CSV/JSON/貼付け対応版。</div>
+<div class="footer-note">© Keiketsu Mini v9.7 – 取込安定化・初期投入保証・拡張子/MIMEチェック・全削除ボタン復活版。</div>
 
 <!-- 一括貼り付け -->
 <dialog id="dlgPaste">
@@ -232,8 +229,8 @@ th.col-enabled{width:72px;text-align:center}
   <code>コード,経穴名,経絡,読み,位置(編集版),位置(WHO要約),主治,その他メモ,五兪穴,五行,編集済,有効</code></p>
   <textarea id="taPaste" rows="10" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:10px"></textarea>
   <div style="margin-top:10px;text-align:right">
-    <button class="btn" onclick="onPasteCancel()">キャンセル</button>
-    <button class="btn primary" onclick="onPasteApply()">取り込む</button>
+    <button class="btn" id="btnPasteCancel">キャンセル</button>
+    <button class="btn primary" id="btnPasteApply">取り込む</button>
   </div>
 </dialog>
 
@@ -258,7 +255,7 @@ th.col-enabled{width:72px;text-align:center}
 <script>
 /* ===== 便利関数・定数 ===== */
 const el=id=>document.getElementById(id);
-const STORAGE='keiketsu-mini-v96';
+const STORAGE='keiketsu-mini-v97';
 let data=[],filtered=[],toastTimer;
 const YIN=new Set(['手の太陰肺経','手の厥陰心包経','手の少陰心経','足の太陰脾経','足の少陰腎経','足の厥陰肝経']);
 const PHASE_SEQ_YIN=['木','火','土','金','水'], PHASE_SEQ_YANG=['金','水','木','火','土'];
@@ -427,6 +424,12 @@ function onDeleteSelected(){
   if(!confirm(keys.length+' 行を削除しますか？')) return;
   data=data.filter(x=>!keys.includes(x.code||x.name)); save(); refresh(); toast('削除しました');
 }
+function onDeleteAll(){
+  if(!confirm('本当に全データを削除しますか？\n（ローカル保存も消去）')) return;
+  data=[]; save();
+  try{ localStorage.removeItem(STORAGE); }catch(_){}
+  refresh(); toast('全データを削除しました');
+}
 function onCheckAll(box){ document.querySelectorAll('.chkRow').forEach(ch=>ch.checked=box.checked) }
 
 /* テーブル描画 */
@@ -493,13 +496,13 @@ function onExportCSV(){
     lines.push(row);
   }
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv'});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='keiketsu_data_v96.csv'; a.click(); URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='keiketsu_data_v97.csv'; a.click(); URL.revokeObjectURL(url);
   toast('CSVを書き出しました');
 }
 function onExportJSON(){
   const arr=data.map(d=>({'コード':d.code||'','経穴名':d.name||'','経絡':d.meridian||'','読み':d.reading||'','位置(編集版)':d.location_edit||'','位置(WHO要約)':d.location_who||'','主治':d.indications||'','その他メモ':d.memo||'','五兪穴':d.shu||'','五行':d.phase||'','編集済':truthy(d.edited)?1:0,'有効':truthy(d.enabled)?1:0}));
   const blob=new Blob([JSON.stringify(arr,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='keiketsu_data_v96.json'; a.click(); URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='keiketsu_data_v97.json'; a.click(); URL.revokeObjectURL(url);
   toast('JSONを書き出しました');
 }
 
@@ -607,22 +610,31 @@ function importFromText(text){
   return count;
 }
 
-/* Paste dialog & buttons */
-async function onImportClick(){const fi=el('fileInput'); if(!fi.files||!fi.files.length){alert('CSV/JSONを選択してください');return} await importFromFile(fi.files[0]); fi.value=''}
-function onBulkPasteOpen(){const d=el('dlgPaste'); if(d.showModal)d.showModal(); else d.setAttribute('open','')}
-function onPasteCancel(){const d=el('dlgPaste'); if(d.close)d.close(); else d.removeAttribute('open')}
-function onPasteApply(){const txt=el('taPaste').value||''; const n=importFromText(txt); onPasteCancel(); toast(`取り込み ${n} 件`)}
-
-/* ===== Init / Seed ===== */
+/* ===== Seed / Init ===== */
 async function importSeed(){
   try{
-    const saved=load();
-    if(Array.isArray(saved)&&saved.length>0){ data=saved.map(ensureDefaults); return }
-    const tag=el('seedData'); if(!tag) throw new Error('seedDataタグが見つかりません');
-    let text=(tag.textContent||tag.innerText||'').replace(/^\uFEFF/,'').trim(); if(!text) throw new Error('seedDataが空です');
-    const arr=JSON.parse(text); if(!Array.isArray(arr)) throw new Error('seedDataが配列ではありません');
-    data=arr.map(ensureDefaults); save();
-  }catch(e){ alert('初期データ読込に失敗：'+e.message+'\n→「サンプル10穴を強制投入」をお試しください。'); data=[]; save(); }
+    const savedRaw = localStorage.getItem(STORAGE);
+    if(savedRaw){
+      try{
+        const saved = JSON.parse(savedRaw);
+        if(Array.isArray(saved) && saved.length>0){
+          data = saved.map(ensureDefaults);
+          return;
+        }
+      }catch(_){}
+    }
+    const tag = el('seedData');
+    if(!tag) throw new Error('seedDataタグが見つかりません');
+    let text = (tag.textContent||tag.innerText||'').replace(/^\uFEFF/,'').trim();
+    if(!text) throw new Error('seedDataが空です');
+    const arr = JSON.parse(text);
+    if(!Array.isArray(arr) || arr.length===0) throw new Error('seedDataが配列ではありません');
+    data = arr.map(ensureDefaults);
+    save();
+  }catch(e){
+    alert('初期データ読込に失敗：'+e.message+'\n→「サンプル10穴を強制投入」をお試しください。');
+    data=[]; save();
+  }
 }
 function resetToSeed(){ try{ localStorage.removeItem(STORAGE) }catch(e){} location.reload() }
 function forceSeed(){
@@ -647,8 +659,8 @@ function forceSeed(){
   }
   save(); refresh(); toast('サンプル10穴を投入しました');
 }
-window.resetToSeed=resetToSeed; window.forceSeed=forceSeed;
 
+/* ===== Init ===== */
 async function init(){
   await importSeed(); 
   refresh();
@@ -669,9 +681,43 @@ async function init(){
   window.addEventListener('resize', adjustTopBarWidth);
   setTimeout(adjustTopBarWidth, 0);
 
+  // ====== イベント紐付け ======
+  // 管理ツールバー
+  el('btnAdd')?.addEventListener('click', onAddClick);
+  el('btnPaste')?.addEventListener('click', onBulkPasteOpen);
+  el('btnExportCSV')?.addEventListener('click', onExportCSV);
+  el('btnExportJSON')?.addEventListener('click', onExportJSON);
+  el('btnDeleteAll')?.addEventListener('click', onDeleteAll);
+  el('txtFind')?.addEventListener('input', renderTable);
+  el('chkAll')?.addEventListener('change', e=>onCheckAll(e.target));
+
+  // ファイル選択でインポートボタン活性化、クリックで実行
+  const fi = el('fileInput'), importBtn = el('btnImport');
+  if(fi && importBtn){
+    fi.addEventListener('change', ()=>{
+      importBtn.disabled = !(fi.files && fi.files.length);
+    });
+    importBtn.addEventListener('click', async ()=>{
+      if(!fi.files || !fi.files.length){ alert('CSV/JSONを選択してください'); return; }
+      const f = fi.files[0];
+      const okExt = /\.(csv|json)$/i.test(f.name);
+      const okType = ['text/csv','application/json','application/vnd.ms-excel'].includes(f.type) || f.type==='';
+      if(!(okExt || okType)){
+        if(!confirm('CSV/JSON以外の可能性があります。続行しますか？')) return;
+      }
+      await importFromFile(f);
+      fi.value='';
+      importBtn.disabled=true;
+    });
+  }
+
   // ABOUTのボタン
-  document.getElementById('btnResetSeed')?.addEventListener('click',e=>{e.preventDefault();resetToSeed()});
-  document.getElementById('btnForceSeed')?.addEventListener('click',e=>{e.preventDefault();forceSeed()});
+  el('btnResetSeed')?.addEventListener('click',e=>{e.preventDefault();resetToSeed()});
+  el('btnForceSeed')?.addEventListener('click',e=>{e.preventDefault();forceSeed()});
+
+  // 貼り付けダイアログ
+  el('btnPasteCancel')?.addEventListener('click', onPasteCancel);
+  el('btnPasteApply')?.addEventListener('click', onPasteApply);
 }
 function refresh(){
   data=data.map(ensureDefaults);
@@ -681,11 +727,12 @@ function refresh(){
 }
 init();
 
-/* expose */
+/* expose（手動呼び出し用） */
 window.start=start; window.endSession=endSession; window.flip=flip; window.markResult=markResult; window.flashClick=flashClick;
-window.onAddClick=onAddClick; window.onImportClick=onImportClick; window.onExportCSV=onExportCSV; window.onExportJSON=onExportJSON;
+window.onAddClick=onAddClick; window.onExportCSV=onExportCSV; window.onExportJSON=onExportJSON;
 window.onBulkPasteOpen=onBulkPasteOpen; window.onPasteCancel=onPasteCancel; window.onPasteApply=onPasteApply;
 window.onDeleteSelected=onDeleteSelected; window.onCheckAll=onCheckAll; window.rowDel=rowDel; window.rowDup=rowDup;
+window.resetToSeed=resetToSeed; window.forceSeed=forceSeed;
 </script>
 </body>
 </html>
