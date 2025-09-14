@@ -166,6 +166,7 @@ th.col-enabled{width:72px;text-align:center}
         <button class="btn" id="btnImport" disabled>インポート</button>
         <button class="btn" id="btnExportCSV">CSV書き出し</button>
         <button class="btn" id="btnExportJSON">JSON書き出し</button>
+        <button class="btn danger" id="btnDeleteSelected">選択した行を削除</button>
         <button class="btn danger" id="btnDeleteAll">全データ削除</button>
         <input id="txtFind" type="text" placeholder="検索（コード/経穴名/位置/主治/メモ/五兪/五行）" style="flex:1;min-width:220px">
       </div>
@@ -690,6 +691,7 @@ async function init(){
   el('btnDeleteAll')?.addEventListener('click', onDeleteAll);
   el('txtFind')?.addEventListener('input', renderTable);
   el('chkAll')?.addEventListener('change', e=>onCheckAll(e.target));
+  el('btnDeleteSelected')?.addEventListener('click', (e)=>{ e.preventDefault(); onDeleteSelected(); });
 
   // ファイル選択でインポートボタン活性化、クリックで実行
   const fi = el('fileInput'), importBtn = el('btnImport');
