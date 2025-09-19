@@ -189,7 +189,6 @@ function normalizeObj(obj){
   const pick=(keys)=>{
     for(const k of keys){
       if(k in obj && obj[k]!=null && String(obj[k]).length) return String(obj[k]);
-      // 別名（無視大小・全角半角差は想定外だが列名は日本語/英語でOK）
       const hit = Object.keys(obj).find(x=>hcanon(x)===hcanon(k));
       if(hit) return String(obj[hit]);
     }
@@ -209,7 +208,6 @@ function normalizeObj(obj){
     edited: Number(pick(['編集済','edited'])||0)?1:0,
     enabled: Number(pick(['有効','enabled'])||1)?1:0
   };
-  // 表示用の代表"location"
   rec.location = rec.locationEdit || rec.locationWHO || '';
   return rec;
 }
@@ -221,7 +219,6 @@ const load=()=>{ try{const raw=localStorage.getItem(STORAGE); if(raw) return JSO
 /* ========= CSVパーサ（クォート対応） ========= */
 function parseCSV(text){
   if(!text) return [];
-  // BOM除去
   if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
   text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const rows=[]; let i=0, field='', row=[], inQ=false;
@@ -240,7 +237,6 @@ function parseCSV(text){
     }
   }
   row.push(field); rows.push(row);
-  // 空行排除
   return rows.filter(r=>r.some(c=>String(c).trim()!==''));
 }
 
@@ -351,6 +347,20 @@ function onExportJSON(){
   URL.revokeObjectURL(url);
 }
 
+/* ========= マージ ========= */
+function mergeData(arr){
+  const mp=new Map(data.map(x=>[(x.code||x.name),x]));
+  let add=0, upd=0;
+  for(const it of arr){
+    const key=(it.code||it.name); if(!key) continue;
+    if(mp.has(key)){ mp.set(key,Object.assign({},mp.get(key),it)); upd++; }
+    else { mp.set(key,it); add++; }
+  }
+  data = Array.from(mp.values());
+  save(); refresh();
+  toast(`追加 ${add} / 更新 ${upd} / 合計 ${data.length}`);
+}
+
 /* ========= テーブル描画 / 編集 ========= */
 function keyOf(d){ return (d.code||d.name||'').trim(); }
 function indexByKey(k){ return data.findIndex(x=>keyOf(x)===k); }
@@ -381,7 +391,6 @@ function renderTable(){
       <td contenteditable>${d.enabled??1}</td>
       <td><button class="btn" onclick="rowDup('${key.replace(/'/g,"\\'")}')">複製</button></td>
     `;
-    // フォーカス外れで保存
     tr.addEventListener('focusout',ev=>{
       const row=ev.currentTarget;
       const tds=row.querySelectorAll('td');
@@ -402,9 +411,9 @@ function renderTable(){
       const oldIdx=indexByKey(key);
       if(oldIdx>=0) data[oldIdx]=Object.assign({},data[oldIdx],obj);
       else data.push(obj);
-      save();
       // 表示用locationを再計算
       data = data.map(x=>Object.assign(x,{location:x.locationEdit||x.locationWHO||''}));
+      save();
     }, {capture:true});
     tb.appendChild(tr);
   }
@@ -414,7 +423,6 @@ function renderTable(){
 function refresh(){ renderTable(); }
 function onCheckAll(box){ document.querySelectorAll('.chkRow').forEach(ch=>ch.checked=box.checked); }
 function onAddClick(){
-  // 1回で1行のみ
   let base='NEW',n=1; while(indexByKey(base+n)!==-1) n++;
   data.unshift(normalizeObj({'コード':base+n,'経穴名':'','経絡':'','読み':'','位置(編集版)':'','位置(WHO要約)':'','主治':'','その他メモ':'','五兪穴':'','五行':'','編集済':0,'有効':1}));
   save(); refresh(); toast('1行追加');
@@ -473,14 +481,12 @@ function shuffle(arr){
 let session={list:[],i:0,mode:'flash',qKey:'name',aKey:'location',correct:0,wrong:0,started:false,requeueWrong:true};
 
 function start(){
-  // 準備
   session.mode=el('mode').value;
   applyPreset(session);
   session.requeueWrong = el('requeueWrong').checked;
   const useMax = el('chkMax').checked;
   let limit = parseInt(el('limit').value||'20',10); if(isNaN(limit)||limit<1) limit=20;
 
-  // location再計算（編集版優先）
   data = data.map(x=>Object.assign(x,{location:x.locationEdit||x.locationWHO||''}));
 
   let pool = data.filter(x=>(x[session.qKey]||'').trim() && (x[session.aKey]||'').trim() && (x.enabled??1));
@@ -615,7 +621,6 @@ document.addEventListener('keydown',e=>{
   if(saved && saved.length){
     data=saved.map(normalizeObj).filter(x=>x.code||x.name);
   }else{
-    // 初回は seedData を読み込む
     importSeed(false);
   }
   refresh();
