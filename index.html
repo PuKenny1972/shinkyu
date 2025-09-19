@@ -3,15 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>経穴学習アプリ v9.6.2</title>
+<title>経穴学習アプリ v9.6.3</title>
 <style>
   :root{
-    --bg:#f7fafc; --card:#ffffff; --accent:#0d6efd; --muted:#6b7280; --line:#e5e7eb;
+    /* v9.6.3: 背景色を淡いミント系に変更 */
+    --bg:#f0fbf7; --card:#ffffff; --accent:#0ea5a3; --muted:#6b7280; --line:#e5e7eb;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;background:var(--bg);color:#111}
-  header{background:linear-gradient(90deg,#0d6efd,#0aa1ff);color:#fff;padding:12px 16px}
-  header h1{margin:0;font-size:18px;font-weight:600}
+  header{background:linear-gradient(90deg,#0ea5a3,#22c55e);color:#fff;padding:12px 16px}
+  header h1{margin:0;font-size:18px;font-weight:700}
+  header .ver{font-size:12px;opacity:.9}
   nav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
   .tabs{display:flex;gap:8px;padding:8px 12px}
   .tabs button{appearance:none;border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}
@@ -39,17 +41,16 @@
   .tableWrap{width:100%;overflow:auto;border:1px solid var(--line);border-radius:10px}
   table{border-collapse:collapse;width:100%;min-width:1200px;background:#fff}
   th,td{border-bottom:1px solid var(--line);padding:6px 8px;vertical-align:top}
-  th{position:sticky;top:0;background:#f9fafb;font-weight:600}
+  th{position:sticky;top:0;background:#f6fffb;font-weight:600}
   td[contenteditable]{background:#fffef6}
-  td .mini{font-size:11px;color:var(--muted)}
-  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
-  .toolbar input[type=file]{max-width:240px}
   #toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#222;color:#fff;padding:8px 12px;border-radius:8px;opacity:0;transition:.25s}
   #toast.show{opacity:1}
 </style>
 </head>
 <body>
-<header><h1>経穴学習アプリ v9.6.2</h1></header>
+<header>
+  <h1>経穴学習アプリ <span class="ver">v9.6.3</span></h1>
+</header>
 
 <nav>
   <div class="tabs">
@@ -104,7 +105,7 @@
 
   <!-- データ管理 -->
   <section id="manage" class="card">
-    <div class="toolbar">
+    <div class="row" style="gap:8px; margin-bottom:8px;">
       <input type="file" id="fileInput" accept=".csv,.json,text/csv,application/json" />
       <button class="btn" onclick="onImportClick()">インポート</button>
       <button class="btn" onclick="onExportCSV()">CSVエクスポート</button>
@@ -115,7 +116,7 @@
       <span class="muted">検索:</span><input id="txtFind" type="text" oninput="refresh()" placeholder="コード/名称/位置など" />
       <span id="info" class="muted"></span>
     </div>
-    <div class="tableWrap" id="tableWrap">
+    <div class="tableWrap">
       <table>
         <thead>
           <tr>
@@ -138,33 +139,33 @@
     <ol>
       <li>「データ管理」でCSV/JSONをインポート（Excelから保存OK）。</li>
       <li>「学習」で出題形式と順序を選び「開始」。クリック/Enter/Spaceで裏表。</li>
-      <li>CSVヘッダは日本語でもOK（例：<span class="muted">コード, 経穴名, 経絡, 読み, 位置(編集版), 位置(WHO要約), 主治, その他メモ, 五兪穴, 五行, 編集済, 有効</span>）。</li>
+      <li>CSVヘッダは日本語でもOK（例：<span class="muted">コード, 経穴名, 経絡, 読み, 位置(編集版), 位置(WHO要約), 位置, 主治, その他メモ, 五兪穴, 五行, 編集済, 有効</span>）。</li>
     </ol>
   </section>
 </main>
 
 <div id="toast"></div>
 
-<!-- 初期サンプル（10穴・WHO要約） -->
+<!-- 初期サンプル（10穴） -->
 <script type="application/json" id="seedData">
 [
   {"コード":"LU-1","経穴名":"中府","経絡":"手太陰肺経","読み":"ちゅうふ","位置(編集版)":"","位置(WHO要約)":"前胸部、第1肋間、前正中線外6寸。","主治":"咳嗽、喘息、胸痛。","その他メモ":"","五兪穴":"","五行":"","編集済":0,"有効":1},
-  {"コード":"LU-5","経穴名":"尺沢","経絡":"手太陰肺経","読み":"しゃくたく","位置(編集版)":"","位置(WHO要約)":"肘窩横紋、上腕二頭筋腱の橈側。","主治":"咳嗽、喘息、咽喉痛。","その他メモ":"","五兪穴":"合","五行":"水","編集済":0,"有効":1},
-  {"コード":"LU-7","経穴名":"列缺","経絡":"手太陰肺経","読み":"れっけつ","位置(編集版)":"","位置(WHO要約)":"手関節横紋上1.5寸、橈骨茎状突起上。","主治":"外感風寒、頭痛、項強。","その他メモ":"","五兪穴":"","五行":"","編集済":0,"有効":1},
-  {"コード":"LI-4","経穴名":"合谷","経絡":"手陽明大腸経","読み":"ごうこく","位置(編集版)":"","位置(WHO要約)":"第1・2中手骨間の中点。","主治":"頭痛、顔面痛、歯痛。","その他メモ":"","五兪穴":"","五行":"","編集済":0,"有効":1},
-  {"コード":"ST-36","経穴名":"足三里","経絡":"足陽明胃経","読み":"あしさんり","位置(編集版)":"","位置(WHO要約)":"犢鼻下3寸、脛骨前縁外。","主治":"胃腸症状、全身調整。","その他メモ":"","五兪穴":"合","五行":"土","編集済":0,"有効":1},
-  {"コード":"SP-6","経穴名":"三陰交","経絡":"足太陰脾経","読み":"さんいんこう","位置(編集版)":"","位置(WHO要約)":"内果上3寸、脛骨内縁後方。","主治":"月経不順、泌尿器症状。","その他メモ":"","五兪穴":"","五行":"","編集済":0,"有効":1},
-  {"コード":"HT-7","経穴名":"神門","経絡":"手少陰心経","読み":"しんもん","位置(編集版)":"","位置(WHO要約)":"手関節横紋尺側端、尺側手根屈筋腱の橈側。","主治":"不眠、健忘、動悸。","その他メモ":"","五兪穴":"","五行":"","編集済":0,"有効":1},
-  {"コード":"SI-3","経穴名":"後谿","経絡":"手太陽小腸経","読み":"こうけい","位置(編集版)":"","位置(WHO要約)":"第5中手指節関節後の陥凹部。","主治":"項背強直、頭痛。","その他メモ":"","五兪穴":"","五行":"","編集済":0,"有効":1},
-  {"コード":"BL-40","経穴名":"委中","経絡":"足太陽膀胱経","読み":"いちゅう","位置(編集版)":"","位置(WHO要約)":"膝窩横紋中央。","主治":"腰痛、下肢麻痺、皮膚疾患。","その他メモ":"","五兪穴":"合","五行":"土","編集済":0,"有効":1},
-  {"コード":"KI-3","経穴名":"太谿","経絡":"足少陰腎経","読み":"たいけい","位置(編集版)":"","位置(WHO要約)":"内果とアキレス腱の間の陥凹部。","主治":"腰痛、耳鳴、不眠。","その他メモ":"","五兪穴":"","五行":"","編集済":0,"有効":1}
+  {"コード":"LU-5","経穴名":"尺沢","経絡":"手太陰肺経","読み":"しゃくたく","位置(WHO要約)":"肘窩横紋、上腕二頭筋腱の橈側。","主治":"咳嗽、喘息、咽喉痛。","編集済":0,"有効":1},
+  {"コード":"LU-7","経穴名":"列缺","経絡":"手太陰肺経","読み":"れっけつ","位置(WHO要約)":"手関節横紋上1.5寸、橈骨茎状突起上。","主治":"外感風寒、頭痛、項強。","編集済":0,"有効":1},
+  {"コード":"LI-4","経穴名":"合谷","経絡":"手陽明大腸経","読み":"ごうこく","位置(WHO要約)":"第1・2中手骨間の中点。","主治":"頭痛、顔面痛、歯痛。","編集済":0,"有効":1},
+  {"コード":"ST-36","経穴名":"足三里","経絡":"足陽明胃経","読み":"あしさんり","位置(WHO要約)":"犢鼻下3寸、脛骨前縁外。","主治":"胃腸症状、全身調整。","五兪穴":"合","五行":"土","編集済":0,"有効":1},
+  {"コード":"SP-6","経穴名":"三陰交","経絡":"足太陰脾経","読み":"さんいんこう","位置(WHO要約)":"内果上3寸、脛骨内縁後方。","主治":"月経不順、泌尿器症状。","編集済":0,"有効":1},
+  {"コード":"HT-7","経穴名":"神門","経絡":"手少陰心経","読み":"しんもん","位置(WHO要約)":"手関節横紋尺側端、尺側手根屈筋腱の橈側。","主治":"不眠、健忘、動悸。","編集済":0,"有効":1},
+  {"コード":"SI-3","経穴名":"後谿","経絡":"手太陽小腸経","読み":"こうけい","位置(WHO要約)":"第5中手指節関節後の陥凹部。","主治":"項背強直、頭痛。","編集済":0,"有効":1},
+  {"コード":"BL-40","経穴名":"委中","経絡":"足太陽膀胱経","読み":"いちゅう","位置(WHO要約)":"膝窩横紋中央。","主治":"腰痛、下肢麻痺、皮膚疾患。","五兪穴":"合","五行":"土","編集済":0,"有効":1},
+  {"コード":"KI-3","経穴名":"太谿","経絡":"足少陰腎経","読み":"たいけい","位置(WHO要約)":"内果とアキレス腱の間の陥凹部。","主治":"腰痛、耳鳴、不眠。","編集済":0,"有効":1}
 ]
 </script>
 
 <script>
 /* ========= ユーティリティ ========= */
 const el=id=>document.getElementById(id);
-const STORAGE='keiketsu-mini-v962';
+const STORAGE='keiketsu-mini-v963'; // vを更新してキャッシュ切替
 let data=[];
 
 function show(id,btn){
@@ -185,7 +186,6 @@ function normKey(s){ return String(s||'').replace(/\uFEFF/g,'').trim(); }
 function hcanon(s){ return normKey(s).replace(/\s+/g,'').toLowerCase(); }
 
 function normalizeObj(obj){
-  // オブジェクト（CSVやJSON）を内部形式に統一
   const pick=(keys)=>{
     for(const k of keys){
       if(k in obj && obj[k]!=null && String(obj[k]).length) return String(obj[k]);
@@ -194,13 +194,19 @@ function normalizeObj(obj){
     }
     return '';
   };
+  // ★ v9.6.3: 「位置」も受け付ける
+  const locEdit = pick(['位置(編集版)','locedit']);
+  const locWHO  = pick(['位置(WHO要約)','位置(who要約)','locwho']);
+  const locPlain= pick(['位置']); // 追加
   const rec = {
     code: normKey(pick(['コード','code','id'])),
     name: normKey(pick(['経穴名','name'])),
     meridian: normKey(pick(['経絡','meridian'])),
     reading: normKey(pick(['読み','reading'])),
-    locationEdit: pick(['位置(編集版)','locedit']),
-    locationWHO: pick(['位置(WHO要約)','位置(who要約)','locwho']),
+    locationEdit: locEdit,
+    locationWHO:  locWHO,
+    // 表示用 location は 編集版 → WHO要約 → 位置 の優先順
+    location: locEdit || locWHO || locPlain || '',
     indications: pick(['主治','indications']),
     memo: pick(['その他メモ','memo']),
     shu: pick(['五兪穴','shu']),
@@ -208,7 +214,6 @@ function normalizeObj(obj){
     edited: Number(pick(['編集済','edited'])||0)?1:0,
     enabled: Number(pick(['有効','enabled'])||1)?1:0
   };
-  rec.location = rec.locationEdit || rec.locationWHO || '';
   return rec;
 }
 
@@ -216,7 +221,7 @@ function normalizeObj(obj){
 const save=()=>localStorage.setItem(STORAGE,JSON.stringify(data));
 const load=()=>{ try{const raw=localStorage.getItem(STORAGE); if(raw) return JSON.parse(raw);}catch(e){} return null; };
 
-/* ========= CSVパーサ（クォート対応） ========= */
+/* ========= CSV（クォート対応） ========= */
 function parseCSV(text){
   if(!text) return [];
   if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
@@ -225,15 +230,13 @@ function parseCSV(text){
   while(i<text.length){
     const ch=text[i];
     if(inQ){
-      if(ch==='"'){
-        if(text[i+1]==='"'){ field+='"'; i+=2; continue; }
-        inQ=false; i++; continue;
-      } else { field+=ch; i++; continue; }
+      if(ch==='"'){ if(text[i+1]==='"'){ field+='"'; i+=2; } else { inQ=false; i++; } }
+      else { field+=ch; i++; }
     }else{
-      if(ch==='"'){ inQ=true; i++; continue; }
-      if(ch===','){ row.push(field); field=''; i++; continue; }
-      if(ch==='\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
-      field+=ch; i++; continue;
+      if(ch==='"'){ inQ=true; i++; }
+      else if(ch===','){ row.push(field); field=''; i++; }
+      else if(ch==='\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; }
+      else { field+=ch; i++; }
     }
   }
   row.push(field); rows.push(row);
@@ -246,7 +249,6 @@ async function onImportClick(){
   if(!fi.files||!fi.files.length){ alert('CSV/JSONを選択してください'); return; }
   await importFromFile(fi.files[0]); fi.value='';
 }
-
 async function importFromFile(file){
   try{
     const buf=await file.arrayBuffer();
@@ -266,8 +268,7 @@ async function importFromFile(file){
     const headers=table[0];
     const arr=[];
     for(let r=1;r<table.length;r++){
-      const row=table[r];
-      const obj={};
+      const row=table[r], obj={};
       headers.forEach((h,i)=>obj[h]=row[i]??'');
       arr.push(normalizeObj(obj));
     }
@@ -278,46 +279,31 @@ async function importFromFile(file){
     alert('インポート失敗: '+e.message);
   }
 }
-
 function importFromText(text){
   try{
     const table=parseCSV(text);
     if(!table.length) return 0;
-    const headers=table[0];
-    const arr=[];
+    const headers=table[0]; const arr=[];
     for(let r=1;r<table.length;r++){
-      const row=table[r], obj={};
-      headers.forEach((h,i)=>obj[h]=row[i]??'');
+      const row=table[r], obj={}; headers.forEach((h,i)=>obj[h]=row[i]??'');
       arr.push(normalizeObj(obj));
     }
     const norm=arr.filter(x=>x.code||x.name);
-    mergeData(norm);
-    return norm.length;
-  }catch(e){
-    alert('貼付インポート失敗: '+e.message);
-    return 0;
-  }
+    mergeData(norm); return norm.length;
+  }catch(e){ alert('貼付インポート失敗: '+e.message); return 0; }
 }
 
-/* ========= サンプル読み込み（初期化） ========= */
-async function importSeed(force=false){
-  if(force && !confirm('ローカル保存を初期化してサンプルを読み込みます。よろしいですか？')) return;
-  const saved=load();
-  if(!force && saved && saved.length){
-    data=saved;
-    refresh();
-    return;
+/* ========= マージ & 反映 ========= */
+function keyOf(d){ return (d.code||d.name||'').trim(); }
+function indexByKey(k){ return data.findIndex(x=>keyOf(x)===k); }
+function mergeData(arr){
+  const mp=new Map(data.map(x=>[keyOf(x),x]));
+  for(const it of arr){
+    const key=keyOf(it); if(!key) continue;
+    mp.set(key, Object.assign({}, mp.get(key)||{}, it));
   }
-  try{
-    const raw=JSON.parse(el('seedData').textContent);
-    if(!Array.isArray(raw)) throw new Error('seedData は配列JSONである必要があります');
-    const norm=raw.map(x=>normalizeObj(x)).filter(x=>x.code||x.name);
-    data=norm;
-    save(); refresh();
-    toast(`サンプル読込：${norm.length}件`);
-  }catch(e){
-    alert('サンプル読込に失敗: '+e.message);
-  }
+  data=Array.from(mp.values());
+  save(); refresh();
 }
 
 /* ========= エクスポート ========= */
@@ -347,24 +333,7 @@ function onExportJSON(){
   URL.revokeObjectURL(url);
 }
 
-/* ========= マージ ========= */
-function mergeData(arr){
-  const mp=new Map(data.map(x=>[(x.code||x.name),x]));
-  let add=0, upd=0;
-  for(const it of arr){
-    const key=(it.code||it.name); if(!key) continue;
-    if(mp.has(key)){ mp.set(key,Object.assign({},mp.get(key),it)); upd++; }
-    else { mp.set(key,it); add++; }
-  }
-  data = Array.from(mp.values());
-  save(); refresh();
-  toast(`追加 ${add} / 更新 ${upd} / 合計 ${data.length}`);
-}
-
 /* ========= テーブル描画 / 編集 ========= */
-function keyOf(d){ return (d.code||d.name||'').trim(); }
-function indexByKey(k){ return data.findIndex(x=>keyOf(x)===k); }
-
 function renderTable(){
   const q=(el('txtFind').value||'').trim().toLowerCase();
   const tb=el('tbody'); tb.innerHTML='';
@@ -392,34 +361,22 @@ function renderTable(){
       <td><button class="btn" onclick="rowDup('${key.replace(/'/g,"\\'")}')">複製</button></td>
     `;
     tr.addEventListener('focusout',ev=>{
-      const row=ev.currentTarget;
-      const tds=row.querySelectorAll('td');
+      const tds=ev.currentTarget.querySelectorAll('td');
       const obj=normalizeObj({
-        'コード':tds[1].textContent,
-        '経穴名':tds[2].textContent,
-        '経絡':tds[3].textContent,
-        '読み':tds[4].textContent,
-        '位置(編集版)':tds[5].textContent,
-        '位置(WHO要約)':tds[6].textContent,
-        '主治':tds[7].textContent,
-        'その他メモ':tds[8].textContent,
-        '五兪穴':tds[9].textContent,
-        '五行':tds[10].textContent,
-        '編集済':tds[11].textContent,
-        '有効':tds[12].textContent
+        'コード':tds[1].textContent,'経穴名':tds[2].textContent,'経絡':tds[3].textContent,'読み':tds[4].textContent,
+        '位置(編集版)':tds[5].textContent,'位置(WHO要約)':tds[6].textContent,
+        '主治':tds[7].textContent,'その他メモ':tds[8].textContent,
+        '五兪穴':tds[9].textContent,'五行':tds[10].textContent,
+        '編集済':tds[11].textContent,'有効':tds[12].textContent
       });
-      const oldIdx=indexByKey(key);
-      if(oldIdx>=0) data[oldIdx]=Object.assign({},data[oldIdx],obj);
-      else data.push(obj);
-      // 表示用locationを再計算
-      data = data.map(x=>Object.assign(x,{location:x.locationEdit||x.locationWHO||''}));
+      const i=indexByKey(key);
+      if(i>=0) data[i]=Object.assign({},data[i],obj); else data.push(obj);
       save();
     }, {capture:true});
     tb.appendChild(tr);
   }
   el('info').textContent = `登録：${data.length}件 / 表示：${filtered.length}件`;
 }
-
 function refresh(){ renderTable(); }
 function onCheckAll(box){ document.querySelectorAll('.chkRow').forEach(ch=>ch.checked=box.checked); }
 function onAddClick(){
@@ -439,8 +396,8 @@ function rowDup(key){
   const src=data[i];
   let c=(src.code||src.name||'COPY')+'_copy', k=1;
   while(indexByKey(c)!==-1) c=(src.code||src.name||'COPY')+'_copy'+(++k);
-  const dup=Object.assign({},src,{code:c});
-  data.splice(i+1,0,dup); save(); refresh(); toast('複製しました');
+  data.splice(i+1,0,Object.assign({},src,{code:c}));
+  save(); refresh(); toast('複製しました');
 }
 
 /* ========= 学習ロジック ========= */
@@ -487,9 +444,10 @@ function start(){
   const useMax = el('chkMax').checked;
   let limit = parseInt(el('limit').value||'20',10); if(isNaN(limit)||limit<1) limit=20;
 
-  data = data.map(x=>Object.assign(x,{location:x.locationEdit||x.locationWHO||''}));
+  // location を毎回再構成（編集版→WHO→位置）
+  data = data.map(x=>Object.assign(x,{location:(x.locationEdit||x.locationWHO||x.location||'')}));
 
-  let pool = data.filter(x=>(x[session.qKey]||'').trim() && (x[session.aKey]||'').trim() && (x.enabled??1));
+  let pool = data.filter(x=>(x[session.qKey]||'').trim() && (x[session.aKey]||'').trim() && (Number(x.enabled??1)!==0));
   pool = orderPool(pool, el('order').value);
   const finalLimit = useMax ? pool.length : Math.min(Math.max(5,limit),Math.max(5,pool.length));
 
@@ -498,7 +456,7 @@ function start(){
 
   if(!session.started){
     el('qText').textContent='該当データがありません';
-    el('aText').textContent='出題形式・CSV/JSONをご確認ください';
+    el('aText').textContent='出題形式・CSV/JSONをご確認ください（列名「位置」でも可）';
     el('mcqArea').classList.add('hidden');
     el('progress').textContent='';
     return;
@@ -507,18 +465,14 @@ function start(){
   updateProgress();
   toast('開始しました');
 }
-
 function endSession(){
   session.started=false; session.list=[]; session.i=0; session.correct=0; session.wrong=0;
   el('qText').textContent='終了しました';
   el('aText').textContent=''; el('subText').textContent='クリック／Enter／Space で裏面表示';
-  el('mcqArea').classList.add('hidden');
-  el('progress').textContent='';
+  el('mcqArea').classList.add('hidden'); el('progress').textContent='';
 }
-
 function current(){ return session.list[session.i]; }
 function labelFor(k){ return ({code:'コード',name:'経穴名',location:'位置',indications:'主治'})[k]||k; }
-
 function showFront(){
   const it=current();
   el('qText').textContent = `${labelFor(session.qKey)}：${it[session.qKey]||'—'}`;
@@ -531,100 +485,4 @@ function showBack(){
   const lines=[
     `${labelFor(session.aKey)}：${it[session.aKey]||'—'}`,
     `コード：${it.code||'—'}　経穴名：${it.name||'—'}　経絡：${it.meridian||'—'}`,
-    `位置(編集版)：${it.locationEdit||'—'}`,
-    `位置(WHO要約)：${it.locationWHO||'—'}`,
-    `主治：${it.indications||'—'}`,
-    `その他：${it.memo||'—'}`
-  ];
-  el('aText').textContent = lines.join('\n');
-  el('subText').textContent='もう一度で表へ';
-  el('mcqArea').classList.add('hidden');
-}
-function flip(){
-  if(!session.started) return;
-  if(session.mode==='mcq') return;
-  if(el('aText').textContent) showFront(); else showBack();
-}
-function flashClick(){ flip(); }
-
-function updateProgress(){
-  el('progress').textContent=`進捗：${session.i+1}/${session.list.length}（正 ${session.correct}・誤 ${session.wrong}）`;
-}
-
-function handleWrongRequeue(it){
-  if(!session.requeueWrong) return;
-  session.list.push(it);
-}
-function next(){
-  session.i++;
-  if(session.i>=session.list.length){
-    el('qText').textContent='セッション完了！';
-    el('aText').textContent=`正解 ${session.correct} / 不正解 ${session.wrong}`;
-    el('subText').textContent=''; el('mcqArea').classList.add('hidden');
-    el('progress').textContent='';
-    session.started=false; return;
-  }
-  if(session.mode==='mcq') showMCQ(); else showFront();
-  updateProgress();
-}
-function markResult(ok){
-  if(!session.started) return;
-  const it=current();
-  if(ok){ session.correct++; toast('正解'); }
-  else { session.wrong++; handleWrongRequeue(it); toast('不正解'); }
-  next();
-}
-
-/* 四択 */
-function showMCQ(){
-  const it=current();
-  el('qText').textContent=`${labelFor(session.qKey)}：${it[session.qKey]||'—'}`;
-  el('aText').textContent=''; el('subText').textContent='';
-  const area=el('mcqArea'); area.innerHTML=''; area.classList.remove('hidden');
-  const opts=pickOptions(it,session.aKey);
-  opts.forEach(o=>{
-    const b=document.createElement('button');
-    b.className='btn'; b.textContent=o[session.aKey]||'（未設定）';
-    b.onclick=()=>{
-      if(o===it){ b.classList.add('primary'); session.correct++; toast('正解'); }
-      else { b.style.borderColor='#e11d48'; b.style.color='#e11d48'; session.wrong++; handleWrongRequeue(it); toast('不正解'); }
-      setTimeout(next,220);
-    };
-    area.appendChild(b);
-  });
-}
-function pickOptions(target,aKey){
-  const pool=data.filter(x=>(x[aKey]||'').trim());
-  const uniq=[]; const seen=new Set();
-  for(const x of pool){ const v=x[aKey]; if(!seen.has(v)){ uniq.push(x); seen.add(v); } }
-  const opts=[target];
-  while(opts.length<4 && uniq.length){
-    const idx=Math.floor(Math.random()*uniq.length);
-    const cand=uniq.splice(idx,1)[0];
-    if(cand[aKey]!==target[aKey]) opts.push(cand);
-  }
-  while(opts.length<4) opts.push(target);
-  return shuffle(opts);
-}
-
-/* キー操作（Enter/Spaceで裏表） */
-document.addEventListener('keydown',e=>{
-  if(e.key==='Enter' || e.key===' '){
-    if(document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
-    e.preventDefault(); flashClick();
-  }
-});
-
-/* ========= 初期化 ========= */
-(function init(){
-  const saved=load();
-  if(saved && saved.length){
-    data=saved.map(normalizeObj).filter(x=>x.code||x.name);
-  }else{
-    importSeed(false);
-  }
-  refresh();
-})();
-</script>
-</body>
-</html>
+    `位置(編集版)：${it.locationEdit
