@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>経穴学習アプリ v9.7.0</title>
 <style>
-  :root{--bg:#f7fafc;--card:#fff;--accent:#0d6efd;--muted:#6b7280;--line:#e5e7eb}
+  :root{
+    --bg:#f7fafc; --card:#ffffff; --accent:#0d6efd; --muted:#6b7280; --line:#e5e7eb;
+    --ans:#0b7ad1;
+  }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;background:var(--bg);color:#111}
   header{background:linear-gradient(90deg,#0d6efd,#0aa1ff);color:#fff;padding:12px 16px}
@@ -27,11 +30,13 @@
   hr{border:none;border-top:1px solid var(--line);margin:12px 0}
 
   /* 学習表示 */
+  #display{padding:8px;border-radius:8px}
   #qText{font-size:20px;font-weight:700;margin:8px 0}
-  #aText{font-size:16px;margin:8px 0;white-space:pre-wrap;min-height:6em}
+  #aText{font-size:16px;margin:8px 0;white-space:pre-wrap}
   #subText{color:var(--muted);font-size:12px}
   #mcqArea.hidden{display:none}
   #mcqArea .btn{min-width:220px}
+  .ans-strong{font-weight:800;font-size:18px;color:var(--ans)}
 
   /* テーブル */
   .tableWrap{width:100%;overflow:auto;border:1px solid var(--line);border-radius:10px}
@@ -39,6 +44,9 @@
   th,td{border-bottom:1px solid var(--line);padding:6px 8px;vertical-align:top}
   th{position:sticky;top:0;background:#f9fafb;font-weight:600}
   td[contenteditable]{background:#fffef6}
+  td .mini{font-size:11px;color:var(--muted)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .toolbar input[type=file]{max-width:240px}
   #toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#222;color:#fff;padding:8px 12px;border-radius:8px;opacity:0;transition:.25s}
   #toast.show{opacity:1}
 </style>
@@ -85,27 +93,15 @@
       <button class="btn ghost" onclick="endSession()">終了</button>
       <span id="progress" class="muted"></span>
     </div>
-
-    <div class="row" style="margin-top:6px">
-      <label><input type="checkbox" id="seqReveal"> 順次表示</label>
-      <button class="btn" id="btnPlay" onclick="toggleReveal()" disabled>再生</button>
-      <label>速度:
-        <select id="revealSpeed">
-          <option value="slow">遅い</option>
-          <option value="normal" selected>普通</option>
-          <option value="fast">速い</option>
-        </select>
-      </label>
-      <span class="muted">※速度は「次の裏面」から反映</span>
-    </div>
-
     <hr>
-    <div id="qText">「開始」を押してください</div>
-    <div id="aText"></div>
-    <div id="subText" class="muted">クリック／Enter／Space で裏面表示</div>
+    <div id="display">
+      <div id="qText">「開始」を押してください</div>
+      <div id="aText"></div>
+      <div id="subText" class="muted">クリック＝再生/停止　／　ダブルクリック or Enter＝一括表示　／　Space＝再生/停止</div>
+    </div>
     <div id="mcqArea" class="hidden row"></div>
     <div class="row">
-      <button class="btn" onclick="flashClick()">裏表</button>
+      <button class="btn" onclick="showBoth()">裏表</button>
       <button class="btn" onclick="markResult(true)">正解</button>
       <button class="btn" onclick="markResult(false)">不正解</button>
     </div>
@@ -113,7 +109,7 @@
 
   <!-- データ管理 -->
   <section id="manage" class="card">
-    <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:8px">
+    <div class="toolbar">
       <input type="file" id="fileInput" accept=".csv,.json,text/csv,application/json" />
       <button class="btn" onclick="onImportClick()">インポート</button>
       <button class="btn" onclick="onExportCSV()">CSVエクスポート</button>
@@ -146,9 +142,8 @@
     <h3>使い方</h3>
     <ol>
       <li>「データ管理」でCSV/JSONをインポート（Excelから保存OK）。</li>
-      <li>「学習」で出題形式と順序を選び「開始」。クリック/Enter/Spaceで裏表。<br>
-          「順次表示」にチェックすると、裏面は1文字ずつ自動表示。「再生」で一時停止/再開。</li>
-      <li>CSVヘッダは日本語でもOK（例：<span class="muted">コード, 経穴名, 経絡, 読み, 位置(編集版), 位置(WHO要約), 主治, その他メモ, 五兪穴, 五行, 編集済, 有効</span>）。</li>
+      <li>「学習」で出題形式と順序を選び「開始」。<strong>クリック＝再生/停止、ダブルクリック/Enter＝一括表示、Space＝再生/停止</strong></li>
+      <li>CSVヘッダは日本語もOK（<span class="muted">コード, 経穴名, 経絡, 読み, 位置(編集版), 位置(WHO要約), 主治, その他メモ, 五兪穴, 五行, 編集済, 有効</span>）。</li>
     </ol>
   </section>
 </main>
@@ -190,9 +185,10 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1200);
 }
 
-/* ========= 正規化 ========= */
+/* ========= キー正規化 & 正規化共通 ========= */
 function normKey(s){ return String(s||'').replace(/\uFEFF/g,'').trim(); }
 function hcanon(s){ return normKey(s).replace(/\s+/g,'').toLowerCase(); }
+
 function normalizeObj(obj){
   const pick=(keys)=>{
     for(const k of keys){
@@ -224,7 +220,7 @@ function normalizeObj(obj){
 const save=()=>localStorage.setItem(STORAGE,JSON.stringify(data));
 const load=()=>{ try{const raw=localStorage.getItem(STORAGE); if(raw) return JSON.parse(raw);}catch(e){} return null; };
 
-/* ========= CSVパーサ ========= */
+/* ========= CSVパーサ（クォート対応） ========= */
 function parseCSV(text){
   if(!text) return [];
   if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
@@ -233,13 +229,15 @@ function parseCSV(text){
   while(i<text.length){
     const ch=text[i];
     if(inQ){
-      if(ch==='"'){ if(text[i+1]==='"'){field+='"'; i+=2;} else {inQ=false; i++;} }
-      else { field+=ch; i++; }
+      if(ch==='"'){
+        if(text[i+1]==='"'){ field+='"'; i+=2; continue; }
+        inQ=false; i++; continue;
+      } else { field+=ch; i++; continue; }
     }else{
-      if(ch==='"'){ inQ=true; i++; }
-      else if(ch===','){ row.push(field); field=''; i++; }
-      else if(ch==='\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; }
-      else { field+=ch; i++; }
+      if(ch==='"'){ inQ=true; i++; continue; }
+      if(ch===','){ row.push(field); field=''; i++; continue; }
+      if(ch==='\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
+      field+=ch; i++; continue;
     }
   }
   row.push(field); rows.push(row);
@@ -252,6 +250,7 @@ async function onImportClick(){
   if(!fi.files||!fi.files.length){ alert('CSV/JSONを選択してください'); return; }
   await importFromFile(fi.files[0]); fi.value='';
 }
+
 async function importFromFile(file){
   try{
     const buf=await file.arrayBuffer();
@@ -261,54 +260,68 @@ async function importFromFile(file){
       const arr=JSON.parse(text);
       if(!Array.isArray(arr)) throw new Error('JSONは配列である必要があります');
       const norm=arr.map(x=>normalizeObj(x)).filter(x=>x.code||x.name);
-      mergeData(norm); toast(`インポート（JSON）：${norm.length}件`); return;
+      mergeData(norm);
+      toast(`インポート（JSON）：${norm.length}件`);
+      return;
     }
+
     const table=parseCSV(text);
     if(!table.length) throw new Error('CSVが空です');
-    const headers=table[0]; const arr=[];
+    const headers=table[0];
+    const arr=[];
     for(let r=1;r<table.length;r++){
-      const row=table[r], obj={}; headers.forEach((h,i)=>obj[h]=row[i]??'');
+      const row=table[r];
+      const obj={};
+      headers.forEach((h,i)=>obj[h]=row[i]??'');
       arr.push(normalizeObj(obj));
     }
     const norm=arr.filter(x=>x.code||x.name);
-    mergeData(norm); toast(`インポート（CSV）：${norm.length}件`);
-  }catch(e){ alert('インポート失敗: '+e.message); }
+    mergeData(norm);
+    toast(`インポート（CSV）：${norm.length}件`);
+  }catch(e){
+    alert('インポート失敗: '+e.message);
+  }
 }
+
 function importFromText(text){
   try{
     const table=parseCSV(text);
     if(!table.length) return 0;
-    const headers=table[0]; const arr=[];
+    const headers=table[0];
+    const arr=[];
     for(let r=1;r<table.length;r++){
-      const row=table[r], obj={}; headers.forEach((h,i)=>obj[h]=row[i]??'');
+      const row=table[r], obj={};
+      headers.forEach((h,i)=>obj[h]=row[i]??'');
       arr.push(normalizeObj(obj));
     }
-    const norm=arr.filter(x=>x.code||x.name); mergeData(norm); return norm.length;
-  }catch(e){ alert('貼付インポート失敗: '+e.message); return 0; }
-}
-function mergeData(arr){
-  const mp=new Map(data.map(x=>[(x.code||x.name),x]));
-  let add=0, upd=0;
-  for(const it of arr){
-    const key=it.code||it.name; if(!key) continue;
-    if(mp.has(key)){ mp.set(key,Object.assign({},mp.get(key),it)); upd++; }
-    else { mp.set(key,it); add++; }
+    const norm=arr.filter(x=>x.code||x.name);
+    mergeData(norm);
+    return norm.length;
+  }catch(e){
+    alert('貼付インポート失敗: '+e.message);
+    return 0;
   }
-  data=Array.from(mp.values());
-  save(); refresh();
 }
 
-/* ========= サンプル読み込み ========= */
+/* ========= サンプル読み込み（初期化） ========= */
 async function importSeed(force=false){
   if(force && !confirm('ローカル保存を初期化してサンプルを読み込みます。よろしいですか？')) return;
   const saved=load();
-  if(!force && saved && saved.length){ data=saved; refresh(); return; }
+  if(!force && saved && saved.length){
+    data=saved;
+    refresh();
+    return;
+  }
   try{
     const raw=JSON.parse(el('seedData').textContent);
     if(!Array.isArray(raw)) throw new Error('seedData は配列JSONである必要があります');
     const norm=raw.map(x=>normalizeObj(x)).filter(x=>x.code||x.name);
-    data=norm; save(); refresh(); toast(`サンプル読込：${norm.length}件`);
-  }catch(e){ alert('サンプル読込に失敗: '+e.message); }
+    data=norm;
+    save(); refresh();
+    toast(`サンプル読込：${norm.length}件`);
+  }catch(e){
+    alert('サンプル読込に失敗: '+e.message);
+  }
 }
 
 /* ========= エクスポート ========= */
@@ -316,27 +329,48 @@ function onExportCSV(){
   const headers=['コード','経穴名','経絡','読み','位置(編集版)','位置(WHO要約)','主治','その他メモ','五兪穴','五行','編集済','有効'];
   const lines=[headers.join(',')];
   for(const d of data){
-    const row=[d.code||'',d.name||'',d.meridian||'',d.reading||'',
-      d.locationEdit||'',d.locationWHO||'',d.indications||'',d.memo||'',
-      d.shu||'',d.phase||'',d.edited||0,d.enabled||1].map(v=>{
-        const s=String(v??''); return /[",\n]/.test(s)?('"'+s.replace(/"/g,'""')+'"'):s;
-      }).join(',');
+    const row=[
+      d.code||'', d.name||'', d.meridian||'', d.reading||'',
+      d.locationEdit||'', d.locationWHO||'', d.indications||'', d.memo||'',
+      d.shu||'', d.phase||'', d.edited||0, d.enabled||1
+    ].map(v=>{
+      const s=String(v??'');
+      return /[",\n]/.test(s)?('"'+s.replace(/"/g,'""')+'"'):s;
+    }).join(',');
     lines.push(row);
   }
   const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv'});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='keiketsu.csv'; a.click(); URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='keiketsu.csv'; a.click();
+  URL.revokeObjectURL(url);
 }
 function onExportJSON(){
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='keiketsu.json'; a.click(); URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='keiketsu.json'; a.click();
+  URL.revokeObjectURL(url);
 }
 
-/* ========= テーブル描画 ========= */
+/* ========= データ結合 ========= */
 function keyOf(d){ return (d.code||d.name||'').trim(); }
 function indexByKey(k){ return data.findIndex(x=>keyOf(x)===k); }
+function mergeData(arr){
+  const mp=new Map(data.map(x=>[keyOf(x),x]));
+  let add=0, upd=0;
+  for(const it of arr){
+    const k=keyOf(it); if(!k) continue;
+    if(mp.has(k)){ mp.set(k,Object.assign({},mp.get(k),it)); upd++; }
+    else { mp.set(k,it); add++; }
+  }
+  data=[...mp.values()];
+  save(); refresh();
+  toast(`追加 ${add} / 更新 ${upd} / 合計 ${data.length}`);
+}
+
+/* ========= テーブル描画 / 編集 ========= */
 function renderTable(){
-  const q=(el('txtFind')?.value||'').trim().toLowerCase();
-  const tb=el('tbody'); if(!tb) return; tb.innerHTML='';
+  const q=(el('txtFind').value||'').trim().toLowerCase();
+  const tb=el('tbody'); tb.innerHTML='';
   const filtered=data.filter(d=>{
     const s=[d.code,d.name,d.meridian,d.reading,d.locationEdit,d.locationWHO,d.indications,d.memo,d.shu,d.phase].join(' ').toLowerCase();
     return !q || s.includes(q);
@@ -344,7 +378,7 @@ function renderTable(){
   for(const d of filtered){
     const key=keyOf(d);
     const tr=document.createElement('tr');
-    tr.innerHTML=`
+    tr.innerHTML = `
       <td><input type="checkbox" class="chkRow" data-key="${key}"></td>
       <td contenteditable>${d.code||''}</td>
       <td contenteditable>${d.name||''}</td>
@@ -361,21 +395,31 @@ function renderTable(){
       <td><button class="btn" onclick="rowDup('${key.replace(/'/g,"\\'")}')">複製</button></td>
     `;
     tr.addEventListener('focusout',ev=>{
-      const tds=tr.querySelectorAll('td');
+      const row=ev.currentTarget;
+      const tds=row.querySelectorAll('td');
       const obj=normalizeObj({
-        'コード':tds[1].textContent,'経穴名':tds[2].textContent,'経絡':tds[3].textContent,'読み':tds[4].textContent,
-        '位置(編集版)':tds[5].textContent,'位置(WHO要約)':tds[6].textContent,'主治':tds[7].textContent,'その他メモ':tds[8].textContent,
-        '五兪穴':tds[9].textContent,'五行':tds[10].textContent,'編集済':tds[11].textContent,'有効':tds[12].textContent
+        'コード':tds[1].textContent,
+        '経穴名':tds[2].textContent,
+        '経絡':tds[3].textContent,
+        '読み':tds[4].textContent,
+        '位置(編集版)':tds[5].textContent,
+        '位置(WHO要約)':tds[6].textContent,
+        '主治':tds[7].textContent,
+        'その他メモ':tds[8].textContent,
+        '五兪穴':tds[9].textContent,
+        '五行':tds[10].textContent,
+        '編集済':tds[11].textContent,
+        '有効':tds[12].textContent
       });
-      const i=indexByKey(key);
-      if(i>=0) data[i]=Object.assign({},data[i],obj);
+      const oldIdx=indexByKey(key);
+      if(oldIdx>=0) data[oldIdx]=Object.assign({},data[oldIdx],obj);
       else data.push(obj);
       save();
-      data=data.map(x=>Object.assign(x,{location:x.locationEdit||x.locationWHO||''}));
-    },{capture:true});
+      data = data.map(x=>Object.assign(x,{location:x.locationEdit||x.locationWHO||''}));
+    }, {capture:true});
     tb.appendChild(tr);
   }
-  el('info').textContent=`登録：${data.length}件 / 表示：${filtered.length}件`;
+  el('info').textContent = `登録：${data.length}件 / 表示：${filtered.length}件`;
 }
 function refresh(){ renderTable(); }
 function onCheckAll(box){ document.querySelectorAll('.chkRow').forEach(ch=>ch.checked=box.checked); }
@@ -388,7 +432,7 @@ function onDeleteSelected(){
   const keys=Array.from(document.querySelectorAll('.chkRow:checked')).map(c=>c.dataset.key);
   if(!keys.length){ alert('削除する行にチェックを付けてください'); return; }
   if(!confirm(`${keys.length} 行を削除しますか？`)) return;
-  data=data.filter(x=>!keys.includes(keyOf(x)));
+  data = data.filter(x=>!keys.includes(keyOf(x)));
   save(); refresh(); toast('削除しました');
 }
 function rowDup(key){
@@ -402,10 +446,10 @@ function rowDup(key){
 
 /* ========= 学習ロジック ========= */
 const PRESETS={
-  'code->name':{qKey:'code',aKey:'name'},
-  'name->location':{qKey:'name',aKey:'location'},
-  'name->indications':{qKey:'name',aKey:'indications'},
-  'location->name':{qKey:'location',aKey:'name'}
+  'code->name':{qKey:'code', aKey:'name'},
+  'name->location':{qKey:'name', aKey:'location'},
+  'name->indications':{qKey:'name', aKey:'indications'},
+  'location->name':{qKey:'location', aKey:'name'}
 };
 const PREFIX_ORDER=['CV','GV','LU','LI','ST','SP','HT','SI','BL','KI','PC','SJ','GB','LV'];
 const PREFIX_RANK=Object.fromEntries(PREFIX_ORDER.map((p,i)=>[p,i]));
@@ -414,6 +458,10 @@ function codeParts(code){
   const m=s.match(/^([A-Z]+)[-]?(\d+)$/);
   if(m) return {prefix:m[1],num:parseInt(m[2],10),raw:s};
   return {prefix:s,num:Number.MAX_SAFE_INTEGER,raw:s};
+}
+function applyPreset(session){
+  const p=PRESETS[el('qaPreset').value]||PRESETS['name->location'];
+  session.qKey=p.qKey; session.aKey=p.aKey;
 }
 function orderPool(pool, mode){
   if(mode!=='code') return shuffle(pool);
@@ -425,156 +473,144 @@ function orderPool(pool, mode){
     return (pa.raw||'').localeCompare(pb.raw||'');
   });
 }
-function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
 
 let session={list:[],i:0,mode:'flash',qKey:'name',aKey:'location',correct:0,wrong:0,started:false,requeueWrong:true};
 
-/* --- 順次表示コントロール --- */
-let revealTimer=null, revealIndex=0, revealText='', revealRunning=false;
-function speedMs(){
-  const v=el('revealSpeed').value||'normal';
-  return v==='slow'?70:(v==='fast'?25:45);
-}
-function startReveal(text){
-  stopReveal(true);
-  revealText=text;
-  revealIndex=0;
-  revealRunning=true;
-  el('btnPlay').disabled=false;
-  el('btnPlay').textContent='一時停止';
-  el('aText').textContent='';
-  revealTimer=setInterval(()=>{
-    revealIndex++;
-    el('aText').textContent=revealText.slice(0,revealIndex);
-    if(revealIndex>=revealText.length) stopReveal(false);
-  }, speedMs());
-}
-function stopReveal(byUser){
-  if(revealTimer){ clearInterval(revealTimer); revealTimer=null; }
-  revealRunning=false;
-  if(byUser){ el('btnPlay').textContent='再生'; }
-  else { el('btnPlay').textContent='再生'; } // 完了後は再生表示
-}
-function toggleReveal(){
-  if(el('btnPlay').disabled) return;
-  if(!revealRunning){
-    // 再生再開：現在の revealText の続きから
-    if(!revealText){ return; }
-    revealRunning=true;
-    el('btnPlay').textContent='一時停止';
-    revealTimer=setInterval(()=>{
-      revealIndex++;
-      el('aText').textContent=revealText.slice(0,revealIndex);
-      if(revealIndex>=revealText.length) stopReveal(false);
-    }, speedMs());
-  }else{
-    stopReveal(true);
-  }
-}
+/* === 再生制御 === */
+let playing=false;
+let autoTimer=null;
+const AUTO_MS_FRONT=2500;  // 表の表示時間
+const AUTO_MS_BACK=3000;   // 裏の表示時間
+let showingBack=false;     // 現在のカードが裏表示か
 
-/* --- 学習操作 --- */
-function applyPreset(){
-  const p=PRESETS[el('qaPreset').value]||PRESETS['name->location'];
-  session.qKey=p.qKey; session.aKey=p.aKey;
-}
 function start(){
   session.mode=el('mode').value;
-  applyPreset();
-  session.requeueWrong=el('requeueWrong').checked;
-  const useMax=el('chkMax').checked;
-  let limit=parseInt(el('limit').value||'20',10); if(isNaN(limit)||limit<1) limit=20;
+  applyPreset(session);
+  session.requeueWrong = el('requeueWrong').checked;
+  const useMax = el('chkMax').checked;
+  let limit = parseInt(el('limit').value||'20',10); if(isNaN(limit)||limit<1) limit=20;
 
-  // 表示用位置を再計算
-  data=data.map(x=>Object.assign(x,{location:x.locationEdit||x.locationWHO||''}));
+  data = data.map(x=>Object.assign(x,{location:x.locationEdit||x.locationWHO||''}));
 
-  let pool=data.filter(x=>(x[session.qKey]||'').trim() && (x[session.aKey]||'').trim() && (x.enabled??1));
-  pool=orderPool(pool, el('order').value);
-  const finalLimit=useMax?pool.length:Math.min(Math.max(5,limit),Math.max(5,pool.length));
+  let pool = data.filter(x=>(x[session.qKey]||'').trim() && (x[session.aKey]||'').trim() && (x.enabled??1));
+  pool = orderPool(pool, el('order').value);
+  const finalLimit = useMax ? pool.length : Math.min(Math.max(5,limit),Math.max(5,pool.length));
 
-  session.list=pool.slice(0,finalLimit);
-  session.i=0; session.correct=0; session.wrong=0; session.started=session.list.length>0;
-
-  // 順次表示の初期制御
-  stopReveal(false);
-  el('btnPlay').disabled=true;
+  session.list = pool.slice(0,finalLimit);
+  session.i=0; session.correct=0; session.wrong=0; session.started = session.list.length>0;
+  showingBack=false; stopAuto();
 
   if(!session.started){
     el('qText').textContent='該当データがありません';
     el('aText').textContent='出題形式・CSV/JSONをご確認ください';
-    el('subText').textContent=''; el('mcqArea').classList.add('hidden'); el('progress').textContent='';
+    el('mcqArea').classList.add('hidden');
+    el('progress').textContent='';
     return;
   }
-  if(session.mode==='mcq') showMCQ(); else showFront();
-  updateProgress(); toast('開始しました');
+  if(session.mode==='mcq'){ showMCQ(); }
+  else { showFront(); }
+  updateProgress();
+  toast('開始しました');
 }
+
 function endSession(){
   session.started=false; session.list=[]; session.i=0; session.correct=0; session.wrong=0;
-  stopReveal(false); el('btnPlay').disabled=true;
-  el('qText').textContent='終了しました'; el('aText').textContent=''; el('subText').textContent='クリック／Enter／Space で裏面表示';
-  el('mcqArea').classList.add('hidden'); el('progress').textContent='';
+  stopAuto();
+  el('qText').textContent='終了しました';
+  el('aText').textContent=''; el('subText').textContent='クリック＝再生/停止　／　ダブルクリック or Enter＝一括表示　／　Space＝再生/停止';
+  el('mcqArea').classList.add('hidden');
+  el('progress').textContent='';
+  showingBack=false;
 }
+
 function current(){ return session.list[session.i]; }
 function labelFor(k){ return ({code:'コード',name:'経穴名',location:'位置',indications:'主治'})[k]||k; }
 
-function showFront(){
-  stopReveal(false); el('btnPlay').disabled=true;
-  const it=current();
-  el('qText').textContent=`${labelFor(session.qKey)}：${it[session.qKey]||'—'}`;
-  el('aText').textContent=''; el('subText').textContent='クリック／Enter／Space で裏面表示';
-  el('mcqArea').classList.add('hidden');
+/* === 表示作成（回答強調） === */
+function fmtAnswerText(k, it){
+  let val='';
+  if(k==='location') val = it.location || '';
+  else if(k==='indications') val = it.indications || '';
+  else if(k==='name') val = it.name || '';
+  else if(k==='code') val = it.code || '';
+  return `<span class="ans-strong">${escapeHTML(val||'—')}</span>`;
 }
-function buildBackText(it){
-  const lines=[
-    `${labelFor(session.aKey)}：${it[session.aKey]||'—'}`,
-    `コード：${it.code||'—'}　経穴名：${it.name||'—'}　経絡：${it.meridian||'—'}`,
-    `位置(編集版)：${it.locationEdit||'—'}`,
-    `位置(WHO要約)：${it.locationWHO||'—'}`,
-    `主治：${it.indications||'—'}`,
-    `その他：${it.memo||'—'}`
-  ];
-  return lines.join('\n');
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function showFront(){
+  const it=current();
+  el('qText').textContent = `${labelFor(session.qKey)}：${it[session.qKey]||'—'}`;
+  el('aText').textContent = '';
+  el('subText').textContent='クリック＝再生/停止　／　ダブルクリック or Enter＝一括表示　／　Space＝再生/停止';
+  el('mcqArea').classList.add('hidden');
+  showingBack=false;
 }
 function showBack(){
   const it=current();
-  const text=buildBackText(it);
-  el('subText').textContent='もう一度で表へ';
+  const answerLine = `${labelFor(session.aKey)}：${fmtAnswerText(session.aKey,it)}`;
+  const linesHTML=[
+    answerLine,
+    `コード：${escapeHTML(it.code||'—')}　経穴名：${escapeHTML(it.name||'—')}　経絡：${escapeHTML(it.meridian||'—')}`,
+    `位置(編集版)：${escapeHTML(it.locationEdit||'—')}`,
+    `位置(WHO要約)：${escapeHTML(it.locationWHO||'—')}`,
+    `主治：${escapeHTML(it.indications||'—')}`,
+    `その他：${escapeHTML(it.memo||'—')}`
+  ].join('\n');
+  el('aText').innerHTML = linesHTML.replace(/\n/g,'<br>');
+  el('subText').textContent='クリック＝再生/停止　／　ダブルクリック or Enter＝一括表示　／　Space＝再生/停止';
   el('mcqArea').classList.add('hidden');
-
-  if(el('seqReveal').checked){
-    startReveal(text); // ここで速度は「現在の設定」を用いる。速度変更は次の裏面から反映
-  }else{
-    stopReveal(false); el('btnPlay').disabled=true;
-    el('aText').textContent=text;
-  }
+  showingBack=true;
 }
+/* 一括表示（表＋裏まとめて） */
+function showBoth(){
+  if(!session.started || session.mode==='mcq') return;
+  const it=current();
+  const q = `${labelFor(session.qKey)}：${escapeHTML(it[session.qKey]||'—')}`;
+  const a = `${labelFor(session.aKey)}：${fmtAnswerText(session.aKey,it)}`;
+  const linesHTML=[
+    `<div>${q}</div>`,
+    `<div>${a}</div>`,
+    `<div>コード：${escapeHTML(it.code||'—')}　経穴名：${escapeHTML(it.name||'—')}　経絡：${escapeHTML(it.meridian||'—')}</div>`,
+    `<div>位置(編集版)：${escapeHTML(it.locationEdit||'—')}</div>`,
+    `<div>位置(WHO要約)：${escapeHTML(it.locationWHO||'—')}</div>`,
+    `<div>主治：${escapeHTML(it.indications||'—')}</div>`,
+    `<div>その他：${escapeHTML(it.memo||'—')}</div>`
+  ].join('');
+  el('aText').innerHTML = linesHTML;
+  el('qText').textContent='';
+  showingBack=true;
+}
+
+/* 既存フリップ（内部用） */
 function flip(){
-  if(!session.started) return;
-  if(session.mode==='mcq') return;
-  if(el('aText').textContent && !el('seqReveal').checked){
-    showFront();
-  }else if(el('aText').textContent && el('seqReveal').checked && revealRunning){
-    // 順次表示中にもう一度押したら表へ
-    showFront();
-  }else{
-    showBack();
-  }
+  if(!session.started || session.mode==='mcq') return;
+  if(showingBack) showFront(); else showBack();
 }
 function flashClick(){ flip(); }
 
 function updateProgress(){
   el('progress').textContent=`進捗：${session.i+1}/${session.list.length}（正 ${session.correct}・誤 ${session.wrong}）`;
 }
-function handleWrongRequeue(it){ if(!session.requeueWrong) return; session.list.push(it); }
+
+function handleWrongRequeue(it){
+  if(!session.requeueWrong) return;
+  session.list.push(it);
+}
 function next(){
   session.i++;
-  stopReveal(false); el('btnPlay').disabled=true;
   if(session.i>=session.list.length){
     el('qText').textContent='セッション完了！';
     el('aText').textContent=`正解 ${session.correct} / 不正解 ${session.wrong}`;
-    el('subText').textContent=''; el('mcqArea').classList.add('hidden'); el('progress').textContent='';
-    session.started=false; return;
+    el('subText').textContent=''; el('mcqArea').classList.add('hidden');
+    el('progress').textContent='';
+    session.started=false; stopAuto(); return;
   }
-  if(session.mode==='mcq') showMCQ(); else showFront();
+  if(session.mode==='mcq') showMCQ(); else { showFront(); }
   updateProgress();
 }
 function markResult(ok){
@@ -587,7 +623,6 @@ function markResult(ok){
 
 /* 四択 */
 function showMCQ(){
-  stopReveal(false); el('btnPlay').disabled=true;
   const it=current();
   el('qText').textContent=`${labelFor(session.qKey)}：${it[session.qKey]||'—'}`;
   el('aText').textContent=''; el('subText').textContent='';
@@ -606,30 +641,61 @@ function showMCQ(){
 }
 function pickOptions(target,aKey){
   const pool=data.filter(x=>(x[aKey]||'').trim());
-  const uniq=[], seen=new Set();
+  const uniq=[]; const seen=new Set();
   for(const x of pool){ const v=x[aKey]; if(!seen.has(v)){ uniq.push(x); seen.add(v); } }
   const opts=[target];
   while(opts.length<4 && uniq.length){
-    const idx=Math.floor(Math.random()*uniq.length); const cand=uniq.splice(idx,1)[0];
+    const idx=Math.floor(Math.random()*uniq.length);
+    const cand=uniq.splice(idx,1)[0];
     if(cand[aKey]!==target[aKey]) opts.push(cand);
   }
   while(opts.length<4) opts.push(target);
   return shuffle(opts);
 }
 
-/* キー操作（Enter/Spaceで裏表） */
-document.addEventListener('keydown',e=>{
-  if(e.key==='Enter' || e.key===' '){
-    if(document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
-    e.preventDefault(); flashClick();
+/* === 自動再生 === */
+function stopAuto(){ playing=false; if(autoTimer){ clearTimeout(autoTimer); autoTimer=null; } }
+function startAuto(){
+  if(session.mode==='mcq') return;   // 四択では自動再生しない
+  playing=true;
+  runTick();
+}
+function toggleAuto(){ if(playing){ stopAuto(); toast('一時停止'); } else { startAuto(); toast('再生'); } }
+function runTick(){
+  if(!playing || !session.started) { stopAuto(); return; }
+  if(!showingBack){
+    showBack();
+    autoTimer=setTimeout(runTick, AUTO_MS_BACK);
+  }else{
+    next();
+    if(session.started){ showFront(); autoTimer=setTimeout(runTick, AUTO_MS_FRONT); }
   }
+}
+
+/* === クリック/ダブルクリック/キー操作 === */
+const displayEl = document.getElementById('display');
+displayEl.addEventListener('click', ()=>{
+  if(!session.started) return;
+  toggleAuto();      // シングルクリック＝再生/停止
+});
+displayEl.addEventListener('dblclick', ()=>{
+  if(!session.started) return;
+  showBoth();        // ダブルクリック＝一括表示
+});
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
+  if(e.key===' '){ e.preventDefault(); if(session.started) toggleAuto(); }
+  else if(e.key==='Enter'){ e.preventDefault(); if(session.started) showBoth(); }
 });
 
 /* ========= 初期化 ========= */
 (function init(){
   const saved=load();
-  if(saved && saved.length){ data=saved.map(normalizeObj).filter(x=>x.code||x.name); }
-  else { importSeed(false); }
+  if(saved && saved.length){
+    data=saved.map(normalizeObj).filter(x=>x.code||x.name);
+  }else{
+    importSeed(false);
+  }
   refresh();
 })();
 </script>
